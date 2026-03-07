@@ -1,54 +1,159 @@
-# Kinx's Lab | SOJI Studio - Photo Frame Generator
+# Kinx's Lab | SOJI Studio — Photo Frame Generator
 
-## Mục Đích Của Dự Án
+> Công cụ web tự động gắn thông số EXIF và thương hiệu cá nhân lên ảnh — chạy hoàn toàn trên trình duyệt, không cần server, không rời khỏi máy bạn một byte nào.
 
-Dự án này là một công cụ web được thiết kế đặc biệt dành cho các nhiếp ảnh gia và những người đam mê nhiếp ảnh. Mục tiêu cốt lõi của ứng dụng là tự động hóa quá trình gắn thông số kỹ thuật (EXIF) và thương hiệu cá nhân vào các bức ảnh. Trước đây, quy trình này thường đòi hỏi người dùng phải tự thiết kế thông qua các phần mềm đồ họa phức tạp như Photoshop.
+🔗 **Live:** [https://b2110270-d51c6.web.app](https://b2110270-d51c6.web.app)
 
-Ứng dụng sẽ tự động phân tích và trích xuất dữ liệu gốc được nhúng bên trong bức ảnh (như Máy ảnh, Ống kính, Khẩu độ, Tốc độ màn trập, ISO, Ngày chụp). Sau đó, nó tự động áp dụng các mẫu giao diện (Templates) khác nhau để xuất bản ra một bức ảnh hoàn thiện, mang tính thẩm mỹ cao. Dự án cũng thể hiện một phong cách cá nhân hóa mạnh mẽ, tối ưu hóa để làm bật lên thương hiệu Kinx's Lab / SOJI Studio.
+---
 
-## Kiến Trúc
+## Tính Năng Nổi Bật
 
-Hệ thống được thiết kế theo dạng Client-side rendering (Xử lý hoàn toàn trên trình duyệt của người dùng). Việc không sử dụng máy chủ Backend để xử lý hình ảnh giúp đảm bảo quyền riêng tư tuyệt đối cho Dữ liệu của người dùng, đồng thời mang lại tốc độ phản hồi ngay lập tức.
+- 📷 **Đọc EXIF tự động** — trích xuất máy ảnh, ống kính, khẩu độ, tốc độ, ISO, ngày chụp, GPS từ JPEG / HEIC
+- 🖼️ **5 template khung ảnh** — từ tối giản đến nghệ thuật
+- 🔍 **Nhận diện logo hãng** — tự động detect và chèn logo Canon, Sony, Fujifilm, Apple, ...
+- 💧 **Watermark cá nhân** — upload logo studio của riêng bạn
+- 📦 **Xuất hàng loạt** — tải xuống toàn bộ ảnh đã xử lý cùng lúc
+- 🔒 **100% client-side** — ảnh không rời khỏi thiết bị của bạn
+- 📱 **Tương thích mọi nền tảng** — bao gồm iOS / Safari (sử dụng Stack Blur thay vì `ctx.filter`)
 
-- Nền tảng cốt lõi: ReactJS kết hợp với công cụ đóng gói Vite.
-- Xử lý Đồ họa: Sử dụng HTML5 Canvas API để tính toán và thiết kế các lớp (Layers) hình ảnh trực tiếp, bao gồm hình ảnh gốc, làm mờ phông nền, tạo bóng đổ, và in văn bản thông số.
-- Phân tích Dữ liệu: Sử dụng thư viện `exifr` để giải mã siêu dữ liệu EXIF từ các định dạng ảnh JPEG hoặc HEIC.
-- Giao diện người dùng (UI): Xây dựng bằng CSS thuần túy với kiến trúc Design Tokens (Các biến CSS Variables). Hệ thống này cho phép thao tác mượt mà giữa Chế độ ban ngày (Light Mode) và Chế độ tối (Dark Mode), cũng như tối ưu hóa bố cục giao diện thích ứng (Responsive).
+---
 
-## Quy Trình Hoạt Động (Workflow)
+## Các Template Khung Ảnh
+
+| Template | Tên file | Mô tả |
+|---|---|---|
+| **iPhone Style** | `iphoneFrame.js` | Panel trắng bên dưới, icon máy ảnh trung tâm, EXIF hai bên |
+| **Cinema Blur** | `blurFrame.js` | Nền blur mờ mịn từ chính bức ảnh, text overlay góc dưới |
+| **Glass Morphism** | `glassFrame.js` | Card kính nổi, nền blur, typography lớn |
+| **Live View** | `liveViewFrame.js` | Giả lập màn hình kính ngắm máy ảnh, HUD + histogram thời gian thực |
+| **Film Negative** | `filmFrame.js` | Viền film âm bản, lỗ sprocket, chữ Kodak-style |
+
+### Thêm Template Mới
+
+Tạo file `src/templates/myTemplate.js` theo cấu trúc:
+
+```js
+export const myTemplate = {
+  name: "my_style",       // ID dùng trong render logic
+  label: "My Template",   // Hiển thị trên UI
+  font: "Inter, sans-serif",
+  layout: {
+    paddingPercent: 5,
+    // ... các tham số bố cục khác
+  }
+};
+```
+
+Rồi đăng ký trong `App.jsx` tại mảng `TEMPLATES`.
+
+---
+
+## Kiến Trúc Hệ Thống
+
+```
+src/
+├── App.jsx                        # State trung tâm, điều phối toàn bộ UI
+├── index.css                      # Design tokens (CSS variables), Light/Dark mode, Responsive
+│
+├── components/
+│   ├── FrameCanvas.jsx            # Canvas preview realtime (re-renders khi settings thay đổi)
+│   ├── TemplateSelector.jsx       # UI chọn template
+│   └── Upload.jsx                 # Drag-and-drop upload zone
+│
+├── templates/
+│   ├── iphoneFrame.js             # Cấu hình iPhone Style
+│   ├── blurFrame.js               # Cấu hình Cinema Blur
+│   ├── glassFrame.js              # Cấu hình Glass Morphism
+│   ├── liveViewFrame.js           # Cấu hình Live View / Camera HUD
+│   └── filmFrame.js               # Cấu hình Film Negative
+│
+└── utils/
+    ├── extractExif.js             # Đọc EXIF từ file ảnh (dùng thư viện exifr)
+    ├── formatMetadata.js          # Format chuỗi EXIF (f/2.8, 1/250s, ISO 400, ...)
+    ├── imageOptimization.js       # Resize ảnh về max 1920px để tối ưu preview
+    ├── softwareBlur.js            # Stack Blur cross-browser (thay thế ctx.filter)
+    └── generateFrame.js           # Renderer cho chức năng export/download (full-res)
+```
+
+### Luồng Dữ Liệu
 
 ```mermaid
 graph TD
-    User_Upload[Người dùng tải ảnh lên] --> App_State[Thêm ảnh vào bộ nhớ State]
-    App_State --> Exif_Parser[Trích xuất siêu dữ liệu EXIF]
-    Exif_Parser --> Setup_Preview[Chuẩn bị dữ liệu hiển thị]
-    
-    User_Settings[Người dùng tùy chỉnh UI] --> Apply_Settings
-    
-    Setup_Preview --> Canvas_Engine[Trình kết xuất HTML5 Canvas]
-    Apply_Settings[Thay đổi Mẫu, Kích thước Text/Logo] --> Canvas_Engine
-    
-    Canvas_Engine --> Live_Preview[Cập nhật bản xem trước]
-    
-    User_Export[Nhấn nút Tải xuống] --> Batch_Renderer[Xử lý xuất file hàng loạt]
-    Batch_Renderer --> Output[Khởi tạo quá trình tải xuống]
+    A[Upload ảnh] --> B[extractExif.js]
+    A --> C[imageOptimization.js]
+    B --> D[App State: photos[]]
+    C --> D
+
+    D --> E[FrameCanvas.jsx<br/>Preview realtime]
+    D --> F[generateFrame.js<br/>Export full-res]
+
+    G[User: chọn template,<br/>chỉnh font, logo...] --> E
+    G --> F
+
+    F --> H[Batch download .jpg]
 ```
 
-## Cấu Trúc Các Thành Phần (Components)
+---
 
-Dự án được mô đun hóa thành các tập tin riêng biệt để tạo ra một cấu trúc mã nguồn liền mạch và dễ nâng cấp:
+## Tại Sao Dùng `softwareBlur` Thay Vì `ctx.filter`?
 
-1. Core (App.jsx): Trái tim của ứng dụng. Đảm nhận việc quản lý trạng thái của hàng loạt ảnh được tải lên, trạng thái giao diện UI, và phân phối luồng dữ liệu cho các thành phần con.
-2. Renderer (FrameCanvas.jsx / generateFrame.js): Thành phần kỹ thuật đồ họa phức tạp nhất. Nhiệm vụ chính là biến các đối tượng dữ liệu thành các bản vẽ thiết kế trên thẻ Canvas. Thành phần này giải quyết việc định dạng văn bản, căn chỉnh lưới, vẽ hiệu ứng Glass Morphism và lưới Camera Live View.
-3. Templates (src/templates/): Một thư mục lưu trữ cấu hình tĩnh định nghĩa từng loại mẫu khung ảnh khác nhau. Việc thêm các thiết kế khung ảnh mới trong tương lai chỉ cần thêm một tệp cấu hình tại thư mục này mà không phần thay đổi cấu trúc lập trình gốc.
-4. Styling (index.css): Tập tin giao diện duy nhất kiểm soát toàn bộ bố cục hiển thị và các biến màu sắc tĩnh lẫn động của ứng dụng.
+Tất cả trình duyệt trên **iOS** (Safari, Chrome, Edge, Firefox) đều sử dụng WebKit engine và **không hỗ trợ `ctx.filter`** trong Canvas 2D API.
 
-## Hướng Dẫn Khởi Chạy Và Thiết Lập
+File `src/utils/softwareBlur.js` dùng thuật toán **Stack Blur** (qua thư viện [`stackblur-canvas`](https://github.com/flozz/StackBlur)) để tạo hiệu ứng blur chất lượng cao trên mọi nền tảng:
 
-Môi trường phát triển (Development):
-1. Chạy lệnh `npm install` để tải tĩnh các thư viện từ kho lưu trữ NPM.
-2. Chạy lệnh `npm run dev` để mở máy chủ phát triển cục bộ (thường khả dụng ở cổng localhost:5173).
+```js
+// Thay vì:
+ctx.filter = `blur(45px)`;  // ❌ Không hoạt động trên iOS
 
-Xây dựng bản sản xuất (Production):
-1. Chạy lệnh `npm run build` để khởi tạo quá trình biên dịch thông qua Webpack/Vite.
-2. Mã nguồn tối ưu (Minified files) sẽ được sinh ra tại thư mục `/dist`. Bạn có thể trực tiếp triển khai thư mục này lên các dịch vụ như Vercel, Netlify hoặc GitHub Pages.
+// Dùng:
+softwareBlur(ctx, img, dx, dy, dw, dh, radius, brightness);  // ✅ Cross-browser
+```
+
+Blur được thực hiện trên canvas thu nhỏ (max 800px) để đảm bảo hiệu năng trên mobile, sau đó scale ngược lên canvas đích.
+
+---
+
+## Hướng Dẫn Phát Triển
+
+### Yêu Cầu
+
+- Node.js 18+
+- npm 9+
+
+### Khởi Chạy Local
+
+```bash
+# Clone và cài dependencies
+npm install
+
+# Khởi chạy dev server (http://localhost:5173)
+npm run dev
+```
+
+### Build & Deploy
+
+```bash
+# Build production
+npm run build
+# → Output: thư mục /dist
+
+# Deploy lên Firebase Hosting
+npx firebase-tools deploy --only hosting
+```
+
+> **Firebase project ID:** `b2110270-d51c6`  
+> Cấu hình hosting nằm trong `firebase.json` — public directory là `dist`, SPA rewrite về `index.html`.
+
+---
+
+## Stack Kỹ Thuật
+
+| Thành phần | Công nghệ |
+|---|---|
+| Framework | React 18 + Vite 7 |
+| Canvas Rendering | HTML5 Canvas 2D API |
+| Blur (cross-platform) | `stackblur-canvas` |
+| EXIF parsing | `exifr` |
+| EXIF copy-to-output | `piexifjs` |
+| Styling | Vanilla CSS (Design Tokens) |
+| Hosting | Firebase Hosting |
