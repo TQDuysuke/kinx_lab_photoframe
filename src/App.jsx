@@ -4,17 +4,19 @@ import TemplateSelector from './components/TemplateSelector';
 import FrameCanvas from './components/FrameCanvas';
 import { extractExif } from './utils/extractExif';
 import { iphoneFrame } from './templates/iphoneFrame';
-import { Image as ImageIcon, Download } from 'lucide-react';
+import { Image as ImageIcon, Download, X } from 'lucide-react';
 import { generateFrameUrl } from './utils/generateFrame';
 
 // Import logos
 import appleLogo from './assets/Apple_logo_black.svg.png';
 import fujiLogo from './assets/Fujifilm_logo.svg.png';
+import fujiLogoWhite from './assets/Fujifilm-Logo-WHITE.png';
 import sonyLogo from './assets/Sony_logo.svg.png';
 import canonLogo from './assets/Canon_wordmark.svg.png';
 import { generateDisplayUrl } from './utils/imageOptimization';
+import { blurFrame } from './templates/blurFrame';
 
-const templates = [iphoneFrame];
+const templates = [iphoneFrame, blurFrame];
 
 export default function App() {
   const [photos, setPhotos] = useState([]);
@@ -26,16 +28,25 @@ export default function App() {
   // New customization state
   const [fontSizeScale, setFontSizeScale] = useState(145);
   const [logoSizeScale, setLogoSizeScale] = useState(245);
+  
+  // Advanced template parameters
+  const [framePadding, setFramePadding] = useState(6); // % width
+  const [blurRadius, setBlurRadius] = useState(17); // px
+  const [blurBrightness, setBlurBrightness] = useState(100); // %
+  const [shadowOpacity, setShadowOpacity] = useState(55); // %
+  
   const [userUploadedLogo, setUserUploadedLogo] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isProcessingUpload, setIsProcessingUpload] = useState(false);
 
   // Helper to determine logo based on EXIF
-  const getLogoForMake = (makeStr) => {
+  const getLogoForMake = (makeStr, styleName) => {
     if (!makeStr) return null;
     const make = makeStr.toLowerCase();
     if (make.includes('apple')) return appleLogo;
-    if (make.includes('fujifilm') || make.includes('fuji')) return fujiLogo;
+    if (make.includes('fujifilm') || make.includes('fuji')) {
+      return styleName === 'blur_style' ? fujiLogoWhite : fujiLogo;
+    }
     if (make.includes('sony')) return sonyLogo;
     if (make.includes('canon')) return canonLogo;
     return null;
@@ -96,7 +107,6 @@ export default function App() {
   };
 
   const activePhoto = photos.find((p) => p.id === activePhotoId);
-  const computedLogo = userUploadedLogo || getLogoForMake(activePhoto?.metadata?.make);
 
   const handleLogoUpload = (e) => {
     const file = e.target.files[0];
@@ -105,6 +115,20 @@ export default function App() {
       reader.onload = (e) => setUserUploadedLogo(e.target.result);
       reader.readAsDataURL(file);
     }
+  };
+
+  const removePhoto = (id, e) => {
+    e.stopPropagation();
+    setPhotos(prev => {
+      const p = prev.find(photo => photo.id === id);
+      if (p && p.displayUrl) URL.revokeObjectURL(p.displayUrl);
+      const newPhotos = prev.filter(photo => photo.id !== id);
+      
+      if (activePhotoId === id) {
+        setActivePhotoId(newPhotos.length > 0 ? newPhotos[0].id : null);
+      }
+      return newPhotos;
+    });
   };
 
   const reset = () => {
@@ -128,8 +152,10 @@ export default function App() {
           photo,
           selectedTemplate,
           fontSizeScale,
-          userUploadedLogo || getLogoForMake(photo.metadata?.make),
-          logoSizeScale
+          userUploadedLogo,
+          getLogoForMake(photo.metadata?.make, selectedTemplate.name),
+          logoSizeScale,
+          { framePadding, blurRadius, shadowOpacity, blurBrightness }
         );
 
         const a = document.createElement('a');
@@ -185,6 +211,9 @@ export default function App() {
                       onClick={() => setActivePhotoId(photo.id)}
                     >
                       <img src={photo.displayUrl} alt="Thumbnail" />
+                      <button className="remove-photo-btn" onClick={(e) => removePhoto(photo.id, e)} title="Remove photo">
+                        <X size={14} />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -224,9 +253,11 @@ export default function App() {
                   metadata={activePhoto.metadata}
                   template={selectedTemplate}
                   fontSizeScale={fontSizeScale}
-                  customLogo={computedLogo}
+                  userUploadedLogo={userUploadedLogo}
+                  detectedLogo={getLogoForMake(activePhoto?.metadata?.make, selectedTemplate?.name)}
                   originalFile={activePhoto.file}
                   logoSizeScale={logoSizeScale}
+                  advancedParams={{ framePadding, blurRadius, shadowOpacity, blurBrightness }}
                 />
               )}
             </section>
@@ -277,6 +308,79 @@ export default function App() {
                     />
                   </div>
                 </div>
+
+                <div className="settings-section">
+                  <div className="control-group">
+                    <label htmlFor="framePaddingSlider" className="control-label">
+                      Frame Margin: {framePadding}%
+                    </label>
+                    <input
+                      id="framePaddingSlider"
+                      type="range"
+                      min="0"
+                      max="20"
+                      step="0.5"
+                      value={framePadding}
+                      onChange={(e) => setFramePadding(Number(e.target.value))}
+                      className="slider"
+                    />
+                  </div>
+                </div>
+                
+                {selectedTemplate.name === 'blur_style' && (
+                  <>
+                    <div className="settings-section">
+                      <div className="control-group">
+                        <label htmlFor="blurRadiusSlider" className="control-label">
+                          Background Blur: {blurRadius}px
+                        </label>
+                        <input
+                          id="blurRadiusSlider"
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={blurRadius}
+                          onChange={(e) => setBlurRadius(Number(e.target.value))}
+                          className="slider"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="settings-section">
+                      <div className="control-group">
+                        <label htmlFor="blurBrightnessSlider" className="control-label">
+                          Background Brightness: {blurBrightness}%
+                        </label>
+                        <input
+                          id="blurBrightnessSlider"
+                          type="range"
+                          min="10"
+                          max="150"
+                          value={blurBrightness}
+                          onChange={(e) => setBlurBrightness(Number(e.target.value))}
+                          className="slider"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="settings-section">
+                      <div className="control-group">
+                        <label htmlFor="shadowSlider" className="control-label">
+                          Drop Shadow: {shadowOpacity}%
+                        </label>
+                        <input
+                          id="shadowSlider"
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={shadowOpacity}
+                          onChange={(e) => setShadowOpacity(Number(e.target.value))}
+                          className="slider"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <div className="settings-section">
                   <span className="control-label" style={{ marginBottom: '0.5rem', display: 'block' }}>Custom Logo</span>
