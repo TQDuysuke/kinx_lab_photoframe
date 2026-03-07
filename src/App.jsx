@@ -12,6 +12,7 @@ import appleLogo from './assets/Apple_logo_black.svg.png';
 import fujiLogo from './assets/Fujifilm_logo.svg.png';
 import sonyLogo from './assets/Sony_logo.svg.png';
 import canonLogo from './assets/Canon_wordmark.svg.png';
+import { generateDisplayUrl } from './utils/imageOptimization';
 
 const templates = [iphoneFrame];
 
@@ -27,6 +28,7 @@ export default function App() {
   const [logoSizeScale, setLogoSizeScale] = useState(245);
   const [userUploadedLogo, setUserUploadedLogo] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isProcessingUpload, setIsProcessingUpload] = useState(false);
 
   // Helper to determine logo based on EXIF
   const getLogoForMake = (makeStr) => {
@@ -40,27 +42,57 @@ export default function App() {
   };
 
   const handleUpload = async (files) => {
-    const newPhotos = await Promise.all(
-      files.map(async (file) => {
-        const id = Math.random().toString(36).substr(2, 9);
-        const exifData = await extractExif(file);
+    setIsProcessingUpload(true);
+    try {
+      const newPhotos = await Promise.all(
+        files.map(async (file) => {
+          const id = Math.random().toString(36).substr(2, 9);
+          
+          let exifData = {};
+          let displayUrl = '';
+          
+          try {
+            exifData = await extractExif(file);
+          } catch(err) { console.warn("Failed EXIF:", err); }
+          
+          try {
+            // Downscale to 1920 immediately for real-time UI switching
+            displayUrl = await generateDisplayUrl(file, 1920);
+          } catch(err) {
+            console.warn("Failed display resize:", err);
+            displayUrl = URL.createObjectURL(file);
+          }
 
-        return {
-          id,
-          file,
-          previewUrl: URL.createObjectURL(file), // Memory efficient instead of base64
-          metadata: exifData || {}
-        };
-      })
-    );
+          return {
+            id,
+            file,
+            displayUrl, 
+            metadata: exifData || {}
+          };
+        })
+      );
 
-    setPhotos((prev) => {
-      const combined = [...prev, ...newPhotos];
-      if (!activePhotoId && combined.length > 0) {
-        setActivePhotoId(combined[0].id);
-      }
-      return combined;
-    });
+      setPhotos((prev) => {
+        let combined = [...prev, ...newPhotos];
+        if (combined.length > 5) {
+          alert("Maximum 5 photos allowed. Slicing the latest additions.");
+          // Free memory for discarded files
+          const discarded = combined.slice(5);
+          discarded.forEach(p => { if (p.displayUrl) URL.revokeObjectURL(p.displayUrl); });
+          combined = combined.slice(0, 5);
+        }
+        
+        if (!activePhotoId && combined.length > 0) {
+          setActivePhotoId(combined[0].id);
+        }
+        return combined;
+      });
+    } catch (error) {
+      console.error("Error during upload generation:", error);
+      alert("Encountered an error while preparing previews.");
+    } finally {
+      setIsProcessingUpload(false);
+    }
   };
 
   const activePhoto = photos.find((p) => p.id === activePhotoId);
@@ -78,7 +110,7 @@ export default function App() {
   const reset = () => {
     photos.forEach(photo => {
       // Free browser memory
-      if (photo.previewUrl) URL.revokeObjectURL(photo.previewUrl);
+      if (photo.displayUrl) URL.revokeObjectURL(photo.displayUrl);
     });
     setPhotos([]);
     setActivePhotoId(null);
@@ -121,6 +153,13 @@ export default function App() {
 
   return (
     <div className="app-container">
+      {isProcessingUpload && (
+        <div className="global-loading-overlay">
+          <div className="spinner"></div>
+          <h2>Optimizing Previews...</h2>
+          <p>Please wait, preparing frames for instant viewing.</p>
+        </div>
+      )}
       <header className="app-header">
         <h1>Photo Metadata Frame Generator</h1>
         <p>Turn your photos into professional showcases</p>
@@ -145,7 +184,7 @@ export default function App() {
                       className={`thumbnail-item ${photo.id === activePhotoId ? 'active' : ''}`}
                       onClick={() => setActivePhotoId(photo.id)}
                     >
-                      <img src={photo.previewUrl} alt="Thumbnail" />
+                      <img src={photo.displayUrl} alt="Thumbnail" />
                     </div>
                   ))}
                 </div>
@@ -162,7 +201,12 @@ export default function App() {
                     style={{ display: 'none' }}
                     onChange={(e) => {
                       const files = Array.from(e.target.files);
+                      if (photos.length >= 5) {
+                        alert("You have reached the maximum limit of 5 photos. Please clear some before adding more.");
+                        return;
+                      }
                       if (files.length > 0) handleUpload(files);
+                      e.target.value = null; // reset input
                     }}
                   />
                   <button className="reset-btn" onClick={reset}>
@@ -176,7 +220,7 @@ export default function App() {
             <section className="column-middle">
               {activePhoto && (
                 <FrameCanvas
-                  imageSrc={activePhoto.previewUrl}
+                  imageSrc={activePhoto.displayUrl}
                   metadata={activePhoto.metadata}
                   template={selectedTemplate}
                   fontSizeScale={fontSizeScale}

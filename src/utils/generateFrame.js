@@ -167,8 +167,17 @@ export const generateFrameUrl = async (photo, template, fontSizeScale, customLog
       } else {
         prepareCanvas(null);
       }
+      
+      // Free the highResUrl memory immediately after the image finishes loading into the canvas
+      URL.revokeObjectURL(img.src);
     };
-    img.onerror = reject;
-    img.src = photo.previewUrl;
+    img.onerror = () => {
+      URL.revokeObjectURL(img.src);
+      reject(new Error("Failed to load original image"));
+    };
+    
+    // Create high-res object URL specifically for the download process
+    const highResUrl = URL.createObjectURL(photo.file);
+    img.src = highResUrl;
   });
 };

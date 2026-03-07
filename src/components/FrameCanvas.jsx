@@ -32,9 +32,8 @@ export default function FrameCanvas({ imageSrc, metadata, template, fontSizeScal
         const imgHeight = img.height;
 
         const scale = imgWidth / 2000;
-
         const bottomHeight = (template.bottomPanelHeight || 140) * scale;
-
+        
         canvas.width = imgWidth;
         canvas.height = imgHeight + bottomHeight;
 
@@ -48,8 +47,11 @@ export default function FrameCanvas({ imageSrc, metadata, template, fontSizeScal
         const padding = (template.layout.padding || 20) * scale;
         const iconSize = (template.layout.iconSize || 60) * scale * scaleFont;
 
-        const camModelFont = `${template.layout.cameraModelFontWeight} ${template.layout.cameraModelFontSize * scale * scaleFont}px ${template.font}`;
-        const metaFont = `${template.layout.metadataFontWeight} ${template.layout.metadataFontSize * scale * scaleFont}px ${template.font}`;
+        const scaledCamModelFontSize = template.layout.cameraModelFontSize * scale * scaleFont;
+        const scaledMetaFontSize = template.layout.metadataFontSize * scale * scaleFont;
+
+        const camModelFont = `${template.layout.cameraModelFontWeight} ${scaledCamModelFontSize}px ${template.font}`;
+        const metaFont = `${template.layout.metadataFontWeight} ${scaledMetaFontSize}px ${template.font}`;
 
         const textColorPrimary = template.layout.textColorPrimary || "#000000";
         const textColorSecondary = template.layout.textColorSecondary || "#666666";
@@ -88,18 +90,12 @@ export default function FrameCanvas({ imageSrc, metadata, template, fontSizeScal
         }
 
         // TEXT LAYOUT LOGIC
-        // Left Side: 
-        // 1. Camera Make & Model
-        // 2. Lens Model (Optional)
-        // 3. Date
         const leftTextX = padding * 2;
         const rightTextX = imgWidth - (padding * 2);
 
         const hasLens = !!metadata.lensModel;
 
-        // Define Y positions depending on how many lines we have
         const lineSpacing = 24 * scale * scaleFont;
-
         let startYLeft = centerY - (hasLens ? lineSpacing : lineSpacing / 2);
 
         ctx.textAlign = 'left';
@@ -122,11 +118,7 @@ export default function FrameCanvas({ imageSrc, metadata, template, fontSizeScal
         startYLeft += lineSpacing;
         ctx.fillText(formatDateTime(metadata.dateTimeOriginal), leftTextX, startYLeft);
 
-
         // Right Side:
-        // 1. Focal Length | F-Stop | Shutter | ISO | EV
-        // 2. GPS
-
         const focal = formatFocalLength(metadata.focalLength || metadata.focalLength35mm);
         const aperture = formatAperture(metadata.fNumber);
         const shutter = formatExposureTime(metadata.exposureTime);
@@ -158,7 +150,7 @@ export default function FrameCanvas({ imageSrc, metadata, template, fontSizeScal
         const logoImg = new Image();
         logoImg.crossOrigin = "anonymous";
         logoImg.onload = () => prepareCanvas(logoImg);
-        logoImg.onerror = () => prepareCanvas(null); // Fallback if logo fails
+        logoImg.onerror = () => prepareCanvas(null);
         logoImg.src = customLogo;
       } else {
         prepareCanvas(null);
