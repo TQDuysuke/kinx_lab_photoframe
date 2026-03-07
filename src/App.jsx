@@ -15,8 +15,11 @@ import sonyLogo from './assets/Sony_logo.svg.png';
 import canonLogo from './assets/Canon_wordmark.svg.png';
 import { generateDisplayUrl } from './utils/imageOptimization';
 import { blurFrame } from './templates/blurFrame';
+import { liveViewFrame } from './templates/liveViewFrame';
+import { filmFrame } from './templates/filmFrame';
+import { glassFrame } from './templates/glassFrame';
 
-const templates = [iphoneFrame, blurFrame];
+const templates = [iphoneFrame, blurFrame, liveViewFrame, filmFrame, glassFrame];
 
 export default function App() {
   const [photos, setPhotos] = useState([]);
@@ -34,6 +37,8 @@ export default function App() {
   const [blurRadius, setBlurRadius] = useState(17); // px
   const [blurBrightness, setBlurBrightness] = useState(100); // %
   const [shadowOpacity, setShadowOpacity] = useState(55); // %
+  const [focusX, setFocusX] = useState(50); // %
+  const [focusY, setFocusY] = useState(50); // %
   
   const [userUploadedLogo, setUserUploadedLogo] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -45,7 +50,7 @@ export default function App() {
     const make = makeStr.toLowerCase();
     if (make.includes('apple')) return appleLogo;
     if (make.includes('fujifilm') || make.includes('fuji')) {
-      return styleName === 'blur_style' ? fujiLogoWhite : fujiLogo;
+      return (styleName === 'blur_style' || styleName === 'glass_style') ? fujiLogoWhite : fujiLogo;
     }
     if (make.includes('sony')) return sonyLogo;
     if (make.includes('canon')) return canonLogo;
@@ -153,9 +158,9 @@ export default function App() {
           selectedTemplate,
           fontSizeScale,
           userUploadedLogo,
-          getLogoForMake(photo.metadata?.make, selectedTemplate.name),
+          getLogoForMake(photo.metadata?.make, selectedTemplate?.name),
           logoSizeScale,
-          { framePadding, blurRadius, shadowOpacity, blurBrightness }
+          { framePadding, blurRadius, shadowOpacity, blurBrightness, focusX, focusY }
         );
 
         const a = document.createElement('a');
@@ -257,7 +262,7 @@ export default function App() {
                   detectedLogo={getLogoForMake(activePhoto?.metadata?.make, selectedTemplate?.name)}
                   originalFile={activePhoto.file}
                   logoSizeScale={logoSizeScale}
-                  advancedParams={{ framePadding, blurRadius, shadowOpacity, blurBrightness }}
+                  advancedParams={{ framePadding, blurRadius, shadowOpacity, blurBrightness, focusX, focusY }}
                 />
               )}
             </section>
@@ -375,6 +380,43 @@ export default function App() {
                           max="100"
                           value={shadowOpacity}
                           onChange={(e) => setShadowOpacity(Number(e.target.value))}
+                          className="slider"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {selectedTemplate.name === 'live_view_style' && (
+                  <>
+                    <div className="settings-section">
+                      <div className="control-group">
+                        <label htmlFor="focusXSlider" className="control-label">
+                          Focus Point X: {focusX}%
+                        </label>
+                        <input
+                          id="focusXSlider"
+                          type="range"
+                          min="10"
+                          max="90"
+                          value={focusX}
+                          onChange={(e) => setFocusX(Number(e.target.value))}
+                          className="slider"
+                        />
+                      </div>
+                    </div>
+                    <div className="settings-section">
+                      <div className="control-group">
+                        <label htmlFor="focusYSlider" className="control-label">
+                          Focus Point Y: {focusY}%
+                        </label>
+                        <input
+                          id="focusYSlider"
+                          type="range"
+                          min="10"
+                          max="90"
+                          value={focusY}
+                          onChange={(e) => setFocusY(Number(e.target.value))}
                           className="slider"
                         />
                       </div>
