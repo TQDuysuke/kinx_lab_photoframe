@@ -4,7 +4,7 @@ import TemplateSelector from './components/TemplateSelector';
 import FrameCanvas from './components/FrameCanvas';
 import { extractExif } from './utils/extractExif';
 import { iphoneFrame } from './templates/iphoneFrame';
-import { Image as ImageIcon, Download, X } from 'lucide-react';
+import { Image as ImageIcon, Download, X, Moon, Sun } from 'lucide-react';
 import { generateFrameUrl } from './utils/generateFrame';
 
 // Import logos
@@ -25,13 +25,16 @@ export default function App() {
   const [photos, setPhotos] = useState([]);
   const [activePhotoId, setActivePhotoId] = useState(null);
 
+  // Dark mode state
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
   const [selectedTemplate, setSelectedTemplate] = useState(templates[0]);
 
 
   // New customization state
   const [fontSizeScale, setFontSizeScale] = useState(145);
   const [logoSizeScale, setLogoSizeScale] = useState(245);
-  
+
   // Advanced template parameters
   const [framePadding, setFramePadding] = useState(6); // % width
   const [blurRadius, setBlurRadius] = useState(17); // px
@@ -39,7 +42,7 @@ export default function App() {
   const [shadowOpacity, setShadowOpacity] = useState(55); // %
   const [focusX, setFocusX] = useState(50); // %
   const [focusY, setFocusY] = useState(50); // %
-  
+
   const [userUploadedLogo, setUserUploadedLogo] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isProcessingUpload, setIsProcessingUpload] = useState(false);
@@ -57,24 +60,30 @@ export default function App() {
     return null;
   };
 
+  // Apple logo is much larger in the asset — default it to 100%, others use slider
+  const getEffectiveLogoSize = (makeStr, sliderValue) => {
+    if (!makeStr) return sliderValue;
+    return makeStr.toLowerCase().includes('apple') ? 100 : sliderValue;
+  };
+
   const handleUpload = async (files) => {
     setIsProcessingUpload(true);
     try {
       const newPhotos = await Promise.all(
         files.map(async (file) => {
           const id = Math.random().toString(36).substr(2, 9);
-          
+
           let exifData = {};
           let displayUrl = '';
-          
+
           try {
             exifData = await extractExif(file);
-          } catch(err) { console.warn("Failed EXIF:", err); }
-          
+          } catch (err) { console.warn("Failed EXIF:", err); }
+
           try {
             // Downscale to 1920 immediately for real-time UI switching
             displayUrl = await generateDisplayUrl(file, 1920);
-          } catch(err) {
+          } catch (err) {
             console.warn("Failed display resize:", err);
             displayUrl = URL.createObjectURL(file);
           }
@@ -82,7 +91,7 @@ export default function App() {
           return {
             id,
             file,
-            displayUrl, 
+            displayUrl,
             metadata: exifData || {}
           };
         })
@@ -97,7 +106,7 @@ export default function App() {
           discarded.forEach(p => { if (p.displayUrl) URL.revokeObjectURL(p.displayUrl); });
           combined = combined.slice(0, 20);
         }
-        
+
         if (!activePhotoId && combined.length > 0) {
           setActivePhotoId(combined[0].id);
         }
@@ -128,7 +137,7 @@ export default function App() {
       const p = prev.find(photo => photo.id === id);
       if (p && p.displayUrl) URL.revokeObjectURL(p.displayUrl);
       const newPhotos = prev.filter(photo => photo.id !== id);
-      
+
       if (activePhotoId === id) {
         setActivePhotoId(newPhotos.length > 0 ? newPhotos[0].id : null);
       }
@@ -159,7 +168,7 @@ export default function App() {
           fontSizeScale,
           userUploadedLogo,
           getLogoForMake(photo.metadata?.make, selectedTemplate?.name),
-          logoSizeScale,
+          getEffectiveLogoSize(photo.metadata?.make, logoSizeScale),
           { framePadding, blurRadius, shadowOpacity, blurBrightness, focusX, focusY }
         );
 
@@ -183,7 +192,7 @@ export default function App() {
   };
 
   return (
-    <div className="app-container">
+    <div className={`app-container${isDarkMode ? ' dark-theme' : ''}`}>
       {isProcessingUpload && (
         <div className="global-loading-overlay">
           <div className="spinner"></div>
@@ -192,8 +201,15 @@ export default function App() {
         </div>
       )}
       <header className="app-header">
-        <h1>Photo Metadata Frame Generator</h1>
-        <p>Turn your photos into professional showcases</p>
+        <button
+          className="theme-toggle-btn"
+          onClick={() => setIsDarkMode(!isDarkMode)}
+          title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+        <h1>Kinx's Lab | Studio</h1>
+        <p>Professional Photo Frame Generator</p>
       </header>
 
       <main className="app-main">
@@ -261,7 +277,7 @@ export default function App() {
                   userUploadedLogo={userUploadedLogo}
                   detectedLogo={getLogoForMake(activePhoto?.metadata?.make, selectedTemplate?.name)}
                   originalFile={activePhoto.file}
-                  logoSizeScale={logoSizeScale}
+                  logoSizeScale={getEffectiveLogoSize(activePhoto?.metadata?.make, logoSizeScale)}
                   advancedParams={{ framePadding, blurRadius, shadowOpacity, blurBrightness, focusX, focusY }}
                 />
               )}
@@ -297,22 +313,24 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="settings-section">
-                  <div className="control-group">
-                    <label htmlFor="logoSizeSlider" className="control-label">
-                      Logo Size: {logoSizeScale}%
-                    </label>
-                    <input
-                      id="logoSizeSlider"
-                      type="range"
-                      min="50"
-                      max="400"
-                      value={logoSizeScale}
-                      onChange={(e) => setLogoSizeScale(Number(e.target.value))}
-                      className="slider"
-                    />
+                {!['film_style', 'live_view_style', 'glass_style'].includes(selectedTemplate.name) && (
+                  <div className="settings-section">
+                    <div className="control-group">
+                      <label htmlFor="logoSizeSlider" className="control-label">
+                        Logo Size: {logoSizeScale}%
+                      </label>
+                      <input
+                        id="logoSizeSlider"
+                        type="range"
+                        min="50"
+                        max="400"
+                        value={logoSizeScale}
+                        onChange={(e) => setLogoSizeScale(Number(e.target.value))}
+                        className="slider"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="settings-section">
                   <div className="control-group">
@@ -331,7 +349,7 @@ export default function App() {
                     />
                   </div>
                 </div>
-                
+
                 {selectedTemplate.name === 'blur_style' && (
                   <>
                     <div className="settings-section">
@@ -424,26 +442,28 @@ export default function App() {
                   </>
                 )}
 
-                <div className="settings-section">
-                  <span className="control-label" style={{ marginBottom: '0.5rem', display: 'block' }}>Custom Logo</span>
-                  <div className="logo-upload-group">
-                    <button className="upload-logo-btn" onClick={() => document.getElementById('logo-upload').click()}>
-                      <ImageIcon size={16} /> Select Logo
-                    </button>
-                    <input
-                      id="logo-upload"
-                      type="file"
-                      accept="image/png, image/svg+xml, image/jpeg"
-                      style={{ display: 'none' }}
-                      onChange={handleLogoUpload}
-                    />
-                    {userUploadedLogo && (
-                      <button className="clear-logo-btn" onClick={() => setUserUploadedLogo(null)}>
-                        Clear
+                {!['film_style', 'live_view_style', 'glass_style'].includes(selectedTemplate.name) && (
+                  <div className="settings-section">
+                    <span className="control-label" style={{ marginBottom: '0.5rem', display: 'block' }}>Custom Logo</span>
+                    <div className="logo-upload-group">
+                      <button className="upload-logo-btn" onClick={() => document.getElementById('logo-upload').click()}>
+                        <ImageIcon size={16} /> Select Logo
                       </button>
-                    )}
+                      <input
+                        id="logo-upload"
+                        type="file"
+                        accept="image/png, image/svg+xml, image/jpeg"
+                        style={{ display: 'none' }}
+                        onChange={handleLogoUpload}
+                      />
+                      {userUploadedLogo && (
+                        <button className="clear-logo-btn" onClick={() => setUserUploadedLogo(null)}>
+                          Clear
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="settings-section" style={{ marginTop: '2rem' }}>
                   <button
@@ -462,6 +482,15 @@ export default function App() {
           </div>
         )}
       </main>
+
+      <footer className="app-footer">
+        <div className="footer-brand">
+          <img src="/src/assets/logo.svg" alt="Kinx's Lab Logo" className="footer-logo" />
+          <span className="footer-brand-name">Kinx's Lab</span>
+        </div>
+        <p className="footer-tagline">Professional Photo Frame Generator — powered by HTML Canvas & EXIF</p>
+        <p className="footer-copy">© {new Date().getFullYear()} Kinx's Lab · All rights reserved</p>
+      </footer>
     </div>
   );
 }
