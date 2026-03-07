@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Upload from './components/Upload';
 import TemplateSelector from './components/TemplateSelector';
 import FrameCanvas from './components/FrameCanvas';
@@ -26,8 +26,34 @@ export default function App() {
   const [activePhotoId, setActivePhotoId] = useState(null);
   const [activeMobileTab, setActiveMobileTab] = useState(null); // 'templates', 'text', 'frame', 'logo'
 
-  // Dark mode state
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  // Dark mode state: initialize from localStorage or system preference
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem('photoframe-theme');
+    if (savedTheme) {
+      return savedTheme === 'dark';
+    }
+    // Fallback to system preference if no saved preference
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  // Sync dark mode preference to localStorage and listen for system changes
+  useEffect(() => {
+    localStorage.setItem('photoframe-theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e) => {
+      // Only auto-switch if user hasn't manually set a preference
+      if (!localStorage.getItem('photoframe-theme')) {
+        setIsDarkMode(e.matches);
+      }
+    };
+    
+    // Add event listener for system theme changes
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   const [selectedTemplate, setSelectedTemplate] = useState(templates[0]);
 
@@ -189,6 +215,24 @@ export default function App() {
       alert("Error generating one or more images.");
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  // --- Mobile Long Press to Delete Logic ---
+  let pressTimer = null;
+
+  const handleThumbnailTouchStart = (photoId) => {
+    pressTimer = setTimeout(() => {
+      if (window.confirm("Bạn có chắc chắn muốn bỏ bức ảnh này không?")) {
+        removePhoto(photoId, null);
+      }
+    }, 600); // 600ms long press
+  };
+
+  const handleThumbnailTouchEnd = () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
     }
   };
 
@@ -508,9 +552,12 @@ export default function App() {
                 key={`mobile-${photo.id}`}
                 className={`thumbnail-item ${photo.id === activePhotoId ? 'active' : ''}`}
                 onClick={() => setActivePhotoId(photo.id)}
+                onTouchStart={() => handleThumbnailTouchStart(photo.id)}
+                onTouchEnd={handleThumbnailTouchEnd}
+                onTouchMove={handleThumbnailTouchEnd}
               >
-                <img src={photo.displayUrl} alt="Thumbnail" />
-                <button className="remove-photo-btn" onClick={(e) => removePhoto(photo.id, e)} title="Remove photo">
+                <img src={photo.displayUrl} alt="Thumbnail" style={{ pointerEvents: 'none' }} />
+                <button className="remove-photo-btn mobile-hide" onClick={(e) => removePhoto(photo.id, e)} title="Remove photo">
                   <X size={14} />
                 </button>
               </div>
