@@ -1,0 +1,17 @@
+{
+  "name": "Kinx's Lab | SOJI Studio",
+  "short_name": "SOJI Studio",
+  "description": "Professional Photo Frame Generator",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#1f2023",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

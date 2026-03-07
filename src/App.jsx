@@ -26,6 +26,8 @@ export default function App() {
   const [activePhotoId, setActivePhotoId] = useState(null);
   const [activeMobileTab, setActiveMobileTab] = useState(null); // 'templates', 'text', 'frame', 'logo'
   const [photoToDelete, setPhotoToDelete] = useState(null); // Custom popup state
+  const [deferredPrompt, setDeferredPrompt] = useState(null); // PWA Install state
+
 
   // Dark mode state: initialize from localStorage or system preference
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -55,6 +57,32 @@ export default function App() {
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
+
+  // PWA Install Prompt Listener
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later.
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
+
 
   const [selectedTemplate, setSelectedTemplate] = useState(templates[0]);
 
@@ -467,7 +495,7 @@ export default function App() {
           <p>Please wait, preparing frames for instant viewing.</p>
         </div>
       )}
-      <header className="app-header">
+      <header className={`app-header ${photos.length > 0 ? 'header-hidden-mobile' : ''}`}>
         <button
           className="theme-toggle-btn"
           onClick={() => setIsDarkMode(!isDarkMode)}
@@ -475,6 +503,15 @@ export default function App() {
         >
           {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
         </button>
+        {deferredPrompt && (
+          <button 
+            className="install-app-btn" 
+            onClick={handleInstallClick}
+            title="Install SOJI Studio to your device"
+          >
+            <ArrowDownToLine size={16} /> Install App
+          </button>
+        )}
         <h1>Kinx's Lab | SOJI Studio</h1>
         <p>Photo Frame Generator</p>
       </header>
@@ -661,7 +698,7 @@ export default function App() {
 
       <footer className="app-footer">
         <div className="footer-brand">
-          <img src="/src/assets/logo.svg" alt="Kinx's Lab Logo" className="footer-logo" />
+          <img src="/logo.svg" alt="Kinx's Lab Logo" className="footer-logo" />
           <span className="footer-brand-name">Kinx's Lab</span>
         </div>
         <p className="footer-tagline">Professional Photo Frame Generator — powered by HTML Canvas & EXIF</p>

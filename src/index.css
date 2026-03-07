@@ -165,9 +165,42 @@ body {
   box-shadow: var(--shadow-lg);
 }
 
+.install-app-btn {
+  position: absolute;
+  top: 1rem;
+  right: 5rem;
+  height: 42px;
+  border-radius: 24px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow-md);
+}
+
+.install-app-btn:hover {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
 @media (max-width: 768px) {
   .theme-toggle-btn {
     display: none;
+  }
+  
+  .install-app-btn {
+    right: 1.5rem; /* Since theme toggle is hidden, push install button to the edge */
   }
 }
 
@@ -276,8 +309,8 @@ body {
   .column-middle {
     width: 100%;
     max-width: 100%;
-    padding-bottom: 80px;
-    /* Space for bottom bar */
+    padding-bottom: 240px;
+    /* Safe padding to completely clear the bottom tab bar and thumbnail strip! */
     overflow-x: auto;
     /* Allow horizontal panning/zooming if needed */
   }
@@ -436,6 +469,17 @@ body {
 }
 
 @media (max-width: 768px) {
+  :root {
+    /* 
+      ========================================
+      SAFE AREA CHO MOBILE CANVAS (CHO ANH CHỈNH)
+      ========================================
+      Nếu ảnh vẫn bị che khuất ở dưới, anh TĂNG con số 320px lên (ví dụ 350px, 380px)
+      để ép khung ảnh lùn xuống thêm nữa.
+    */
+    --mobile-canvas-safe-height: calc(100vh - 350px);
+  }
+
   .mobile-thumbnail-strip {
     display: flex;
   }
@@ -458,7 +502,18 @@ body {
     /* Allow zooming on mobile */
   }
 
+  .preview-canvas {
+    /* Scale dynamically within available viewport above the thumbnail strip */
+    max-height: var(--mobile-canvas-safe-height);
+    width: 100%;
+    object-fit: contain;
+  }
+
   .remove-photo-btn {
+    display: none !important;
+  }
+
+  .header-hidden-mobile {
     display: none !important;
   }
 }
@@ -923,11 +978,36 @@ body {
   color: #fff;
 }
 
-.btn-cancel:hover { background: var(--border-strong); }
-.btn-delete:hover { background: #dc2626; transform: scale(1.03); }
+.btn-cancel:hover {
+  background: var(--border-strong);
+}
 
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes scaleUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.btn-delete:hover {
+  background: #dc2626;
+  transform: scale(1.03);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
 
 /* ─── Final Mobile Overrides ─────────────────── */
 @media (max-width: 768px) {
