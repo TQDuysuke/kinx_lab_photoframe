@@ -5,9 +5,11 @@ export default function Upload({ onUpload }) {
   const handleDrop = useCallback(
     (e) => {
       e.preventDefault();
-      const file = e.dataTransfer.files[0];
-      if (file && (file.type.startsWith('image/') || file.name.match(/\.(heic|jpg|jpeg|png)$/i))) {
-        onUpload(file);
+      const files = Array.from(e.dataTransfer.files).filter(
+        (file) => file.type === 'image/jpeg' || file.type === 'image/heic' || file.type === 'image/png'
+      );
+      if (files.length > 0) {
+        onUpload(files);
       }
     },
     [onUpload]
@@ -18,9 +20,9 @@ export default function Upload({ onUpload }) {
   };
 
   const handleChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      onUpload(file);
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      onUpload(files);
     }
   };
 
@@ -34,15 +36,16 @@ export default function Upload({ onUpload }) {
       <input
         id="file-upload"
         type="file"
-        accept="image/jpeg, image/png, image/heic, .heic"
+        accept="image/jpeg, image/png, image/heic"
+        multiple
         onChange={handleChange}
         style={{ display: 'none' }}
       />
       <div className="upload-content">
         <UploadCloud size={48} className="upload-icon" />
-        <p className="upload-text">Drag and drop your photo here</p>
-        <p className="upload-subtext">or click to browse</p>
-        <p className="upload-hint">Supports JPG, PNG, HEIC</p>
+        <p className="upload-text">Drag & drop your photos here</p>
+        <p className="upload-subtext">or click to browse from your device</p>
+        <p className="upload-hint">Supports JPG, PNG, HEIC (Multiple selection allowed)</p>
       </div>
     </div>
   );
