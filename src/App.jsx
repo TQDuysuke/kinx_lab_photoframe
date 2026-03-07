@@ -74,12 +74,12 @@ export default function App() {
 
       setPhotos((prev) => {
         let combined = [...prev, ...newPhotos];
-        if (combined.length > 5) {
-          alert("Maximum 5 photos allowed. Slicing the latest additions.");
+        if (combined.length > 20) {
+          alert("Maximum 20 photos allowed. Slicing the latest additions.");
           // Free memory for discarded files
-          const discarded = combined.slice(5);
+          const discarded = combined.slice(20);
           discarded.forEach(p => { if (p.displayUrl) URL.revokeObjectURL(p.displayUrl); });
-          combined = combined.slice(0, 5);
+          combined = combined.slice(0, 20);
         }
         
         if (!activePhotoId && combined.length > 0) {
@@ -201,8 +201,8 @@ export default function App() {
                     style={{ display: 'none' }}
                     onChange={(e) => {
                       const files = Array.from(e.target.files);
-                      if (photos.length >= 5) {
-                        alert("You have reached the maximum limit of 5 photos. Please clear some before adding more.");
+                      if (photos.length >= 20) {
+                        alert("You have reached the maximum limit of 20 photos. Please clear some before adding more.");
                         return;
                       }
                       if (files.length > 0) handleUpload(files);

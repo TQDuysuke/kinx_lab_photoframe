@@ -8,9 +8,9 @@ export default function Upload({ onUpload }) {
       const files = Array.from(e.dataTransfer.files).filter(
         (file) => file.type === 'image/jpeg' || file.type === 'image/heic' || file.type === 'image/png'
       );
-      if (files.length > 5) {
-        alert("Please upload a maximum of 5 photos at a time.");
-        onUpload(files.slice(0, 5));
+      if (files.length > 20) {
+        alert("Please upload a maximum of 20 photos at a time.");
+        onUpload(files.slice(0, 20));
       } else if (files.length > 0) {
         onUpload(files);
       }
@@ -24,9 +24,9 @@ export default function Upload({ onUpload }) {
 
   const handleChange = (e) => {
     const files = Array.from(e.target.files);
-    if (files.length > 5) {
-      alert("Please upload a maximum of 5 photos at a time.");
-      onUpload(files.slice(0, 5));
+    if (files.length > 20) {
+      alert("Please upload a maximum of 20 photos at a time.");
+      onUpload(files.slice(0, 20));
     } else if (files.length > 0) {
       onUpload(files);
     }
@@ -51,7 +51,7 @@ export default function Upload({ onUpload }) {
         <UploadCloud size={48} className="upload-icon" />
         <p className="upload-text">Drag & drop your photos here</p>
         <p className="upload-subtext">or click to browse from your device</p>
-        <p className="upload-hint">Supports JPG, PNG, HEIC (Max 5 photos)</p>
+        <p className="upload-hint">Supports JPG, PNG, HEIC (Max 20 photos)</p>
       </div>
     </div>
   );
