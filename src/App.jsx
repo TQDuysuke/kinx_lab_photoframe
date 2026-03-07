@@ -4,7 +4,7 @@ import TemplateSelector from './components/TemplateSelector';
 import FrameCanvas from './components/FrameCanvas';
 import { extractExif } from './utils/extractExif';
 import { iphoneFrame } from './templates/iphoneFrame';
-import { Image as ImageIcon, Download, X, Moon, Sun } from 'lucide-react';
+import { Image as ImageIcon, Download, X, Moon, Sun, LayoutTemplate, SlidersHorizontal, Type, ArrowDownToLine } from 'lucide-react';
 import { generateFrameUrl } from './utils/generateFrame';
 
 // Import logos
@@ -24,6 +24,7 @@ const templates = [iphoneFrame, blurFrame, liveViewFrame, filmFrame, glassFrame]
 export default function App() {
   const [photos, setPhotos] = useState([]);
   const [activePhotoId, setActivePhotoId] = useState(null);
+  const [activeMobileTab, setActiveMobileTab] = useState(null); // 'templates', 'text', 'frame', 'logo'
 
   // Dark mode state
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -191,6 +192,195 @@ export default function App() {
     }
   };
 
+  // --- Reusable Control Components for Desktop & Mobile ---
+  
+  const renderTemplateSelector = () => (
+    <div className="settings-section">
+      <h3 className="template-heading" style={{ marginBottom: '0.75rem' }}>Layout Style</h3>
+      <TemplateSelector
+        templates={templates}
+        selectedTemplate={selectedTemplate}
+        onSelect={setSelectedTemplate}
+      />
+    </div>
+  );
+
+  const renderTypographySettings = () => (
+    <div className="settings-section">
+      <div className="control-group">
+        <label htmlFor="fontSizeSlider" className="control-label">
+          Text Size: {fontSizeScale}%
+        </label>
+        <input
+          id="fontSizeSlider"
+          type="range"
+          min="50"
+          max="200"
+          value={fontSizeScale}
+          onChange={(e) => setFontSizeScale(Number(e.target.value))}
+          className="slider"
+        />
+      </div>
+    </div>
+  );
+
+  const renderLogoSettings = () => (
+    <>
+      {!['film_style', 'live_view_style', 'glass_style'].includes(selectedTemplate.name) && (
+        <div className="settings-section">
+          <div className="control-group">
+            <label htmlFor="logoSizeSlider" className="control-label">
+              Logo Size: {logoSizeScale}%
+            </label>
+            <input
+              id="logoSizeSlider"
+              type="range"
+              min="50"
+              max="400"
+              value={logoSizeScale}
+              onChange={(e) => setLogoSizeScale(Number(e.target.value))}
+              className="slider"
+            />
+          </div>
+        </div>
+      )}
+      {!['film_style', 'live_view_style', 'glass_style'].includes(selectedTemplate.name) && (
+        <div className="settings-section">
+          <span className="control-label" style={{ marginBottom: '0.5rem', display: 'block' }}>Custom Logo</span>
+          <div className="logo-upload-group">
+            <button className="upload-logo-btn" onClick={() => document.getElementById('logo-upload').click()}>
+              <ImageIcon size={16} /> Select Logo
+            </button>
+            <input
+              id="logo-upload"
+              type="file"
+              accept="image/png, image/svg+xml, image/jpeg"
+              style={{ display: 'none' }}
+              onChange={handleLogoUpload}
+            />
+            {userUploadedLogo && (
+              <button className="clear-logo-btn" onClick={() => setUserUploadedLogo(null)}>
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  const renderFrameSettings = () => (
+    <>
+      <div className="settings-section">
+        <div className="control-group">
+          <label htmlFor="framePaddingSlider" className="control-label">
+            Frame Margin: {framePadding}%
+          </label>
+          <input
+            id="framePaddingSlider"
+            type="range"
+            min="0"
+            max="20"
+            step="0.5"
+            value={framePadding}
+            onChange={(e) => setFramePadding(Number(e.target.value))}
+            className="slider"
+          />
+        </div>
+      </div>
+
+      {selectedTemplate.name === 'blur_style' && (
+        <>
+          <div className="settings-section">
+            <div className="control-group">
+              <label htmlFor="blurRadiusSlider" className="control-label">
+                Background Blur: {blurRadius}px
+              </label>
+              <input
+                id="blurRadiusSlider"
+                type="range"
+                min="0"
+                max="100"
+                value={blurRadius}
+                onChange={(e) => setBlurRadius(Number(e.target.value))}
+                className="slider"
+              />
+            </div>
+          </div>
+          <div className="settings-section">
+            <div className="control-group">
+              <label htmlFor="blurBrightnessSlider" className="control-label">
+                Background Brightness: {blurBrightness}%
+              </label>
+              <input
+                id="blurBrightnessSlider"
+                type="range"
+                min="10"
+                max="150"
+                value={blurBrightness}
+                onChange={(e) => setBlurBrightness(Number(e.target.value))}
+                className="slider"
+              />
+            </div>
+          </div>
+          <div className="settings-section">
+            <div className="control-group">
+              <label htmlFor="shadowSlider" className="control-label">
+                Drop Shadow: {shadowOpacity}%
+              </label>
+              <input
+                id="shadowSlider"
+                type="range"
+                min="0"
+                max="100"
+                value={shadowOpacity}
+                onChange={(e) => setShadowOpacity(Number(e.target.value))}
+                className="slider"
+              />
+            </div>
+          </div>
+        </>
+      )}
+
+      {selectedTemplate.name === 'live_view_style' && (
+        <>
+          <div className="settings-section">
+            <div className="control-group">
+              <label htmlFor="focusXSlider" className="control-label">
+                Focus Point X: {focusX}%
+              </label>
+              <input
+                id="focusXSlider"
+                type="range"
+                min="10"
+                max="90"
+                value={focusX}
+                onChange={(e) => setFocusX(Number(e.target.value))}
+                className="slider"
+              />
+            </div>
+          </div>
+          <div className="settings-section">
+            <div className="control-group">
+              <label htmlFor="focusYSlider" className="control-label">
+                Focus Point Y: {focusY}%
+              </label>
+              <input
+                id="focusYSlider"
+                type="range"
+                min="10"
+                max="90"
+                value={focusY}
+                onChange={(e) => setFocusY(Number(e.target.value))}
+                className="slider"
+              />
+            </div>
+          </div>
+        </>
+      )}
+    </>
+  );
+
   return (
     <div className={`app-container${isDarkMode ? ' dark-theme' : ''}`}>
       {isProcessingUpload && (
@@ -287,183 +477,10 @@ export default function App() {
             <aside className="column-right">
               <div className="panel-box">
                 <h2 className="panel-title">Settings</h2>
-
-                <div className="settings-section">
-                  <TemplateSelector
-                    templates={templates}
-                    selectedTemplate={selectedTemplate}
-                    onSelect={setSelectedTemplate}
-                  />
-                </div>
-
-                <div className="settings-section">
-                  <div className="control-group">
-                    <label htmlFor="fontSizeSlider" className="control-label">
-                      Text Size: {fontSizeScale}%
-                    </label>
-                    <input
-                      id="fontSizeSlider"
-                      type="range"
-                      min="50"
-                      max="200"
-                      value={fontSizeScale}
-                      onChange={(e) => setFontSizeScale(Number(e.target.value))}
-                      className="slider"
-                    />
-                  </div>
-                </div>
-
-                {!['film_style', 'live_view_style', 'glass_style'].includes(selectedTemplate.name) && (
-                  <div className="settings-section">
-                    <div className="control-group">
-                      <label htmlFor="logoSizeSlider" className="control-label">
-                        Logo Size: {logoSizeScale}%
-                      </label>
-                      <input
-                        id="logoSizeSlider"
-                        type="range"
-                        min="50"
-                        max="400"
-                        value={logoSizeScale}
-                        onChange={(e) => setLogoSizeScale(Number(e.target.value))}
-                        className="slider"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div className="settings-section">
-                  <div className="control-group">
-                    <label htmlFor="framePaddingSlider" className="control-label">
-                      Frame Margin: {framePadding}%
-                    </label>
-                    <input
-                      id="framePaddingSlider"
-                      type="range"
-                      min="0"
-                      max="20"
-                      step="0.5"
-                      value={framePadding}
-                      onChange={(e) => setFramePadding(Number(e.target.value))}
-                      className="slider"
-                    />
-                  </div>
-                </div>
-
-                {selectedTemplate.name === 'blur_style' && (
-                  <>
-                    <div className="settings-section">
-                      <div className="control-group">
-                        <label htmlFor="blurRadiusSlider" className="control-label">
-                          Background Blur: {blurRadius}px
-                        </label>
-                        <input
-                          id="blurRadiusSlider"
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={blurRadius}
-                          onChange={(e) => setBlurRadius(Number(e.target.value))}
-                          className="slider"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="settings-section">
-                      <div className="control-group">
-                        <label htmlFor="blurBrightnessSlider" className="control-label">
-                          Background Brightness: {blurBrightness}%
-                        </label>
-                        <input
-                          id="blurBrightnessSlider"
-                          type="range"
-                          min="10"
-                          max="150"
-                          value={blurBrightness}
-                          onChange={(e) => setBlurBrightness(Number(e.target.value))}
-                          className="slider"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="settings-section">
-                      <div className="control-group">
-                        <label htmlFor="shadowSlider" className="control-label">
-                          Drop Shadow: {shadowOpacity}%
-                        </label>
-                        <input
-                          id="shadowSlider"
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={shadowOpacity}
-                          onChange={(e) => setShadowOpacity(Number(e.target.value))}
-                          className="slider"
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {selectedTemplate.name === 'live_view_style' && (
-                  <>
-                    <div className="settings-section">
-                      <div className="control-group">
-                        <label htmlFor="focusXSlider" className="control-label">
-                          Focus Point X: {focusX}%
-                        </label>
-                        <input
-                          id="focusXSlider"
-                          type="range"
-                          min="10"
-                          max="90"
-                          value={focusX}
-                          onChange={(e) => setFocusX(Number(e.target.value))}
-                          className="slider"
-                        />
-                      </div>
-                    </div>
-                    <div className="settings-section">
-                      <div className="control-group">
-                        <label htmlFor="focusYSlider" className="control-label">
-                          Focus Point Y: {focusY}%
-                        </label>
-                        <input
-                          id="focusYSlider"
-                          type="range"
-                          min="10"
-                          max="90"
-                          value={focusY}
-                          onChange={(e) => setFocusY(Number(e.target.value))}
-                          className="slider"
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {!['film_style', 'live_view_style', 'glass_style'].includes(selectedTemplate.name) && (
-                  <div className="settings-section">
-                    <span className="control-label" style={{ marginBottom: '0.5rem', display: 'block' }}>Custom Logo</span>
-                    <div className="logo-upload-group">
-                      <button className="upload-logo-btn" onClick={() => document.getElementById('logo-upload').click()}>
-                        <ImageIcon size={16} /> Select Logo
-                      </button>
-                      <input
-                        id="logo-upload"
-                        type="file"
-                        accept="image/png, image/svg+xml, image/jpeg"
-                        style={{ display: 'none' }}
-                        onChange={handleLogoUpload}
-                      />
-                      {userUploadedLogo && (
-                        <button className="clear-logo-btn" onClick={() => setUserUploadedLogo(null)}>
-                          Clear
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
+                {renderTemplateSelector()}
+                {renderTypographySettings()}
+                {renderFrameSettings()}
+                {renderLogoSettings()}
 
                 <div className="settings-section" style={{ marginTop: '2rem' }}>
                   <button
@@ -476,12 +493,75 @@ export default function App() {
                     {isDownloading ? 'Generating...' : `Download All (${photos.length})`}
                   </button>
                 </div>
-
               </div>
             </aside>
           </div>
         )}
       </main>
+
+      {/* MOBILE BOTTOM NAVIGATION BAR & POPUP */}
+      {photos.length > 0 && (
+        <>
+          <div className="mobile-thumbnail-strip">
+            {photos.map((photo) => (
+              <div
+                key={`mobile-${photo.id}`}
+                className={`thumbnail-item ${photo.id === activePhotoId ? 'active' : ''}`}
+                onClick={() => setActivePhotoId(photo.id)}
+              >
+                <img src={photo.displayUrl} alt="Thumbnail" />
+                <button className="remove-photo-btn" onClick={(e) => removePhoto(photo.id, e)} title="Remove photo">
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <nav className="mobile-bottom-bar">
+            <button className={`mobile-tab-btn ${activeMobileTab === 'templates' ? 'active' : ''}`} onClick={() => setActiveMobileTab(activeMobileTab === 'templates' ? null : 'templates')}>
+              <LayoutTemplate size={22} />
+              <span>Layout</span>
+            </button>
+            <button className={`mobile-tab-btn ${activeMobileTab === 'text' ? 'active' : ''}`} onClick={() => setActiveMobileTab(activeMobileTab === 'text' ? null : 'text')}>
+              <Type size={22} />
+              <span>Text</span>
+            </button>
+            <button className={`mobile-tab-btn ${activeMobileTab === 'frame' ? 'active' : ''}`} onClick={() => setActiveMobileTab(activeMobileTab === 'frame' ? null : 'frame')}>
+              <SlidersHorizontal size={22} />
+              <span>Frame</span>
+            </button>
+            <button className={`mobile-tab-btn ${activeMobileTab === 'logo' ? 'active' : ''}`} onClick={() => setActiveMobileTab(activeMobileTab === 'logo' ? null : 'logo')}>
+              <ImageIcon size={22} />
+              <span>Logo</span>
+            </button>
+            <button className="mobile-tab-btn" onClick={handleBatchDownload} disabled={isDownloading} style={{ color: isDownloading ? 'var(--text-muted)' : 'var(--accent)' }}>
+              <ArrowDownToLine size={22} />
+              <span>{isDownloading ? 'Wait' : 'Save'}</span>
+            </button>
+          </nav>
+
+          {/* MOBILE BOTTOM SHEET FOR ACTIVE TAB */}
+          <div className={`mobile-bottom-sheet ${activeMobileTab ? 'open' : ''}`}>
+            <div className="sheet-header">
+              <h3 className="sheet-title">
+                {activeMobileTab === 'templates' && 'Layout Style'}
+                {activeMobileTab === 'text' && 'Typography Options'}
+                {activeMobileTab === 'frame' && 'Frame Settings'}
+                {activeMobileTab === 'logo' && 'Logo & Branding'}
+              </h3>
+              <button className="close-sheet-btn" onClick={() => setActiveMobileTab(null)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="sheet-content">
+              {activeMobileTab === 'templates' && renderTemplateSelector()}
+              {activeMobileTab === 'text' && renderTypographySettings()}
+              {activeMobileTab === 'frame' && renderFrameSettings()}
+              {activeMobileTab === 'logo' && renderLogoSettings()}
+            </div>
+          </div>
+        </>
+      )}
 
       <footer className="app-footer">
         <div className="footer-brand">
