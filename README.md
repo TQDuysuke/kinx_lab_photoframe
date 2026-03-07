@@ -1,6 +1,6 @@
 # Kinx's Lab | SOJI Studio - Photo Frame Generator
 
-## Ý Nghĩa Và Mục Đích Của Dự Án
+## Mục Đích Của Dự Án
 
 Dự án này là một công cụ web được thiết kế đặc biệt dành cho các nhiếp ảnh gia và những người đam mê nhiếp ảnh. Mục tiêu cốt lõi của ứng dụng là tự động hóa quá trình gắn thông số kỹ thuật (EXIF) và thương hiệu cá nhân vào các bức ảnh. Trước đây, quy trình này thường đòi hỏi người dùng phải tự thiết kế thông qua các phần mềm đồ họa phức tạp như Photoshop.
 
