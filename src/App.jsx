@@ -208,8 +208,8 @@ export default function App() {
         >
           {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
         </button>
-        <h1>Kinx's Lab | Studio</h1>
-        <p>Professional Photo Frame Generator</p>
+        <h1>Kinx's Lab | SOJI Studio</h1>
+        <p>Photo Frame Generator</p>
       </header>
 
       <main className="app-main">
