@@ -200,9 +200,43 @@ export default function App() {
           { framePadding, blurRadius, shadowOpacity, blurBrightness, focusX, focusY }
         );
 
+        // Get original photo name for the fallback or the shared file
+        const oName = photo.file?.name ? photo.file.name.replace(/\.[^/.]+$/, '') : `photo-${i + 1}`;
+
+        // Strict iOS detection (iPhone, iPad, iPod) - handling both old and new iPads
+        const isIOS = [
+          'iPad Simulator',
+          'iPhone Simulator',
+          'iPod Simulator',
+          'iPad',
+          'iPhone',
+          'iPod',
+        ].includes(navigator.platform)
+        // iPad on iOS 13+ detection
+        || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+
+        if (isIOS && navigator.share && navigator.canShare) {
+          // Convert dataURL to Blob for iOS native Share Sheet
+          try {
+            const res = await fetch(dataUrl);
+            const blob = await res.blob();
+            const file = new File([blob], `framed-${oName}.jpg`, { type: 'image/jpeg' });
+            
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                files: [file],
+                title: 'Photo Frame',
+              });
+              continue; // Successfully shared/saved natively, skip the <a> tag
+            }
+          } catch (shareErr) {
+            console.log("Web Share API failed or cancelled", shareErr);
+            // Fallback to <a> tag if it fails
+          }
+        }
+
         const a = document.createElement('a');
         a.href = dataUrl;
-        const oName = photo.file?.name ? photo.file.name.replace(/\.[^/.]+$/, '') : `photo-${i + 1}`;
         a.download = `framed-${oName}.jpg`;
         document.body.appendChild(a);
         a.click();
