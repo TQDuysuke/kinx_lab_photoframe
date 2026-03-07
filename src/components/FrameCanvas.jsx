@@ -10,6 +10,7 @@ import {
   formatExposureBias,
   formatLensModel
 } from '../utils/formatMetadata';
+import { softwareBlur } from '../utils/softwareBlur';
 
 export default function FrameCanvas({ imageSrc, metadata, template, fontSizeScale = 145, userUploadedLogo, detectedLogo, originalFile, logoSizeScale = 245, advancedParams = {} }) {
   const canvasRef = useRef(null);
@@ -52,11 +53,8 @@ export default function FrameCanvas({ imageSrc, metadata, template, fontSizeScal
           const offsetX = (canvas.width - bgWidth) / 2;
           const offsetY = (canvas.height - bgHeight) / 2;
           
-          ctx.filter = `blur(${pBlur}px) brightness(${pBright / 100})`;
-          ctx.drawImage(img, offsetX, offsetY, bgWidth, bgHeight);
-          
-          ctx.filter = 'none';
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; // extra dimming to pop the image
+          softwareBlur(ctx, img, offsetX, offsetY, bgWidth, bgHeight, pBlur, pBright / 100);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           ctx.restore();
 
@@ -405,13 +403,15 @@ export default function FrameCanvas({ imageSrc, metadata, template, fontSizeScal
 
           // 1. Draw blurred backdrop (Background)
           ctx.save();
-          ctx.filter = `blur(${80 * tScale}px) brightness(${advancedParams.blurBrightness ?? 70}%)`;
           const scaleW = canvas.width / imgWidth;
           const scaleH = canvas.height / imgHeight;
-          const scaleBg = Math.max(scaleW, scaleH) * 1.1; 
+          const scaleBg = Math.max(scaleW, scaleH) * 1.1;
           const drawW = imgWidth * scaleBg;
           const drawH = imgHeight * scaleBg;
-          ctx.drawImage(img, (canvas.width - drawW)/2, (canvas.height - drawH)/2, drawW, drawH);
+          const bgDx = (canvas.width - drawW) / 2;
+          const bgDy = (canvas.height - drawH) / 2;
+          const blurBrightnessPct = (advancedParams.blurBrightness ?? 70) / 100;
+          softwareBlur(ctx, img, bgDx, bgDy, drawW, drawH, 80 * tScale, blurBrightnessPct);
           ctx.restore();
 
           // 2. Draw Glass Card

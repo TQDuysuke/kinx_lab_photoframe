@@ -10,39 +10,8 @@ import {
   formatExposureBias,
   formatLensModel
 } from './formatMetadata';
+import { softwareBlur } from './softwareBlur';
 
-/**
- * Software blur via progressive downscale→upscale.
- * Works on all browsers including Safari/iOS where ctx.filter is unsupported.
- * @param {CanvasRenderingContext2D} ctx  - destination context
- * @param {HTMLImageElement|HTMLCanvasElement} src - image/canvas to draw blurred
- * @param {number} dx, dy, dw, dh - destination rect on ctx
- * @param {number} blurRadius - conceptual blur radius (1-100). Larger = blurrier.
- * @param {number} brightness - 0-1 multiplier applied via a darkening overlay
- */
-function softwareBlur(ctx, src, dx, dy, dw, dh, blurRadius, brightness) {
-  // Cap blur: higher blurRadius = smaller intermediate canvas = more blur
-  const factor = Math.max(2, Math.min(32, blurRadius / 3));
-  const tmpW = Math.max(1, Math.round(dw / factor));
-  const tmpH = Math.max(1, Math.round(dh / factor));
-
-  // Step 1: Draw downscaled (generates natural bilinear blur)
-  const tmp = document.createElement('canvas');
-  tmp.width = tmpW;
-  tmp.height = tmpH;
-  const tCtx = tmp.getContext('2d');
-  tCtx.drawImage(src, 0, 0, src.naturalWidth || src.width, src.naturalHeight || src.height, 0, 0, tmpW, tmpH);
-
-  // Step 2: Draw upscaled back to destination (smoothed)
-  ctx.drawImage(tmp, 0, 0, tmpW, tmpH, dx, dy, dw, dh);
-
-  // Step 3: Apply brightness via semi-transparent overlay
-  if (brightness !== undefined && brightness < 1) {
-    const alpha = 1 - brightness;
-    ctx.fillStyle = `rgba(0, 0, 0, ${alpha.toFixed(3)})`;
-    ctx.fillRect(dx, dy, dw, dh);
-  }
-}
 
 export const generateFrameUrl = async (photo, template, fontSizeScale, userUploadedLogo, detectedLogo, logoSizeScale = 245, advancedParams = {}) => {
   return new Promise((resolve, reject) => {
