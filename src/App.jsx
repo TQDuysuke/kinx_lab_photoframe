@@ -25,6 +25,7 @@ export default function App() {
   const [photos, setPhotos] = useState([]);
   const [activePhotoId, setActivePhotoId] = useState(null);
   const [activeMobileTab, setActiveMobileTab] = useState(null); // 'templates', 'text', 'frame', 'logo'
+  const [photoToDelete, setPhotoToDelete] = useState(null); // Custom popup state
 
   // Dark mode state: initialize from localStorage or system preference
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -223,9 +224,7 @@ export default function App() {
 
   const handleThumbnailTouchStart = (photoId) => {
     pressTimer = setTimeout(() => {
-      if (window.confirm("Bạn có chắc chắn muốn bỏ bức ảnh này không?")) {
-        removePhoto(photoId, null);
-      }
+      setPhotoToDelete(photoId); // Show custom modal
     }, 600); // 600ms long press
   };
 
@@ -607,6 +606,22 @@ export default function App() {
               {activeMobileTab === 'logo' && renderLogoSettings()}
             </div>
           </div>
+          {/* DELETE CONFIRMATION MODAL */}
+          {photoToDelete && (
+            <div className="delete-confirm-overlay">
+              <div className="delete-confirm-modal">
+                <h3>Remove Photo?</h3>
+                <p>Are you sure you want to remove this photo from your workspace?</p>
+                <div className="modal-actions">
+                  <button className="btn-cancel" onClick={() => setPhotoToDelete(null)}>Cancel</button>
+                  <button className="btn-delete" onClick={(e) => {
+                    removePhoto(photoToDelete, e);
+                    setPhotoToDelete(null);
+                  }}>Remove</button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
 
