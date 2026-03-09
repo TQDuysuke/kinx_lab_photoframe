@@ -166,7 +166,7 @@ export default function FrameCanvas({ imageSrc, metadata, template, fontSizeScal
             // Since it's bottom baseline, we move Y up by drawHeight
             // Also apply invert filter if we want white logo, except for natively white ones
             const makeLower = metadata.make?.toLowerCase() || '';
-            const isNativeWhite = makeLower.includes('canon') || makeLower.includes('fuji');
+            const isNativeWhite = makeLower.includes('canon') || makeLower.includes('fuji') || makeLower.includes('ricoh');
             
             ctx.save();
             if (!isNativeWhite) {

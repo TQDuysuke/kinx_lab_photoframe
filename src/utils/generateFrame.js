@@ -153,7 +153,7 @@ export const generateFrameUrl = async (photo, template, fontSizeScale, userUploa
             }
 
             const makeLower = metadata.make?.toLowerCase() || '';
-            const isNativeWhite = makeLower.includes('canon') || makeLower.includes('fuji');
+            const isNativeWhite = makeLower.includes('canon') || makeLower.includes('fuji') || makeLower.includes('ricoh');
             
             ctx.save();
             if (!isNativeWhite) {

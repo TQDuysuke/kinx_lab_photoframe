@@ -13,6 +13,8 @@ import fujiLogo from './assets/Fujifilm_logo.svg.png';
 import fujiLogoWhite from './assets/Fujifilm-Logo-WHITE.png';
 import sonyLogo from './assets/Sony_logo.svg.png';
 import canonLogo from './assets/Canon_wordmark.svg.png';
+import nikonLogo from './assets/Nikon_logo.png';
+import ricohLogo from './assets/Ricoh_logo_2005.svg.png';
 import { generateDisplayUrl } from './utils/imageOptimization';
 import { blurFrame } from './templates/blurFrame';
 import { liveViewFrame } from './templates/liveViewFrame';
@@ -113,6 +115,8 @@ export default function App() {
     }
     if (make.includes('sony')) return sonyLogo;
     if (make.includes('canon')) return canonLogo;
+    if (make.includes('nikon')) return nikonLogo;
+    if (make.includes('ricoh')) return ricohLogo;
     return null;
   };
 
