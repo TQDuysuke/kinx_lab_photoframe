@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import Upload from './components/Upload';
 import TemplateSelector from './components/TemplateSelector';
 import FrameCanvas from './components/FrameCanvas';
+import YearbookPage from './pages/YearbookPage';
 import { extractExif } from './utils/extractExif';
 import { iphoneFrame } from './templates/iphoneFrame';
-import { Image as ImageIcon, Download, X, Moon, Sun, LayoutTemplate, SlidersHorizontal, Type, ArrowDownToLine } from 'lucide-react';
+import { Image as ImageIcon, Download, X, Moon, Sun, LayoutTemplate, SlidersHorizontal, Type, ArrowDownToLine, BookOpen, Camera } from 'lucide-react';
 import { generateFrameUrl } from './utils/generateFrame';
 
 // Import logos
@@ -24,6 +25,7 @@ import { glassFrame } from './templates/glassFrame';
 const templates = [iphoneFrame, blurFrame, liveViewFrame, filmFrame, glassFrame];
 
 export default function App() {
+  const [activePage, setActivePage] = useState('frame'); // 'frame' | 'yearbook'
   const [photos, setPhotos] = useState([]);
   const [activePhotoId, setActivePhotoId] = useState(null);
   const [activeMobileTab, setActiveMobileTab] = useState(null); // 'templates', 'text', 'frame', 'logo'
@@ -499,7 +501,7 @@ export default function App() {
           <p>Please wait, preparing frames for instant viewing.</p>
         </div>
       )}
-      <header className={`app-header ${photos.length > 0 ? 'header-hidden-mobile' : ''}`}>
+      <header className={`app-header ${photos.length > 0 && activePage === 'frame' ? 'header-hidden-mobile' : ''}`}>
         <button
           className="theme-toggle-btn"
           onClick={() => setIsDarkMode(!isDarkMode)}
@@ -518,14 +520,36 @@ export default function App() {
         )}
         <h1>Kinx's Lab | SOJI Studio</h1>
         <p>Photo Frame Generator</p>
+
+        {/* Page Tab Navigation */}
+        <div className="app-tab-bar">
+          <button
+            className={`app-tab-btn ${activePage === 'frame' ? 'active' : ''}`}
+            onClick={() => setActivePage('frame')}
+          >
+            <Camera size={16} /> Photo Frame
+          </button>
+          <button
+            className={`app-tab-btn ${activePage === 'yearbook' ? 'active' : ''}`}
+            onClick={() => setActivePage('yearbook')}
+          >
+            <BookOpen size={16} /> Yearbook
+          </button>
+        </div>
       </header>
 
       <main className="app-main">
-        {photos.length === 0 ? (
+        {/* Yearbook Page */}
+        {activePage === 'yearbook' && (
+          <YearbookPage isDarkMode={isDarkMode} />
+        )}
+
+        {/* Photo Frame Page */}
+        {activePage === 'frame' && photos.length === 0 ? (
           <div className="upload-wrapper">
             <Upload onUpload={handleUpload} />
           </div>
-        ) : (
+        ) : activePage === 'frame' && (
           <div className="three-column-layout">
             {/* LEFT COLUMN: Controls & Reset */}
             <aside className="column-left">
@@ -618,7 +642,7 @@ export default function App() {
       </main>
 
       {/* MOBILE BOTTOM NAVIGATION BAR & POPUP */}
-      {photos.length > 0 && (
+      {activePage === 'frame' && photos.length > 0 && (
         <>
           <div className="mobile-thumbnail-strip">
             {photos.map((photo) => (
