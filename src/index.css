@@ -1,5 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Dancing+Script:wght@400;600;700&display=swap');
 
+@font-face {
+  font-family: '1FTV-Blushing-Rose';
+  src: url('/1FTV-Blushing-Rose.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 /* ─── Design Tokens ──────────────────────────── */
 :root {
   /* Backgrounds */
@@ -1443,5 +1450,60 @@ body {
 
   .yearbook-mobile-bar {
     display: flex !important;
+  }
+}
+
+/* ─── Print Media Query ──────────────────────── */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  .print-canvas-section, 
+  .print-canvas-section * {
+    visibility: visible;
+  }
+  
+  .print-canvas-section {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .print-canvas-wrapper {
+    /* Safe margin for printer bleeding: ~0.15in (approx 4mm) to prevent cut-offs */
+    padding: 0.15in !important;
+    box-sizing: border-box !important;
+    width: 100vw !important;
+    height: 100vh !important;
+  }
+
+  /* Fill screen with canvas to ensure it scales correctly */
+  .print-canvas-wrapper canvas {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+  }
+
+  /* Reset layout constraints specific to print */
+  .app-container, .app-main {
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .print-hide {
+    display: none !important;
+  }
+
+  @page {
+    margin: 0;
   }
 }

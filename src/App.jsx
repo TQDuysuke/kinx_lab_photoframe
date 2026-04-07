@@ -3,9 +3,10 @@ import Upload from './components/Upload';
 import TemplateSelector from './components/TemplateSelector';
 import FrameCanvas from './components/FrameCanvas';
 import YearbookPage from './pages/YearbookPage';
+import DoublePrintPage from './pages/DoublePrintPage';
 import { extractExif } from './utils/extractExif';
 import { iphoneFrame } from './templates/iphoneFrame';
-import { Image as ImageIcon, Download, X, Moon, Sun, LayoutTemplate, SlidersHorizontal, Type, ArrowDownToLine, BookOpen, Camera } from 'lucide-react';
+import { Image as ImageIcon, Download, X, Moon, Sun, LayoutTemplate, SlidersHorizontal, Type, ArrowDownToLine, BookOpen, Camera, Printer } from 'lucide-react';
 import { generateFrameUrl } from './utils/generateFrame';
 
 // Import logos
@@ -25,7 +26,7 @@ import { glassFrame } from './templates/glassFrame';
 const templates = [iphoneFrame, blurFrame, liveViewFrame, filmFrame, glassFrame];
 
 export default function App() {
-  const [activePage, setActivePage] = useState('frame'); // 'frame' | 'yearbook'
+  const [activePage, setActivePage] = useState(() => localStorage.getItem('last_active_page') || 'frame'); // 'frame' | 'yearbook' | 'doubleprint'
   const [photos, setPhotos] = useState([]);
   const [activePhotoId, setActivePhotoId] = useState(null);
   const [activeMobileTab, setActiveMobileTab] = useState(null); // 'templates', 'text', 'frame', 'logo'
@@ -61,6 +62,11 @@ export default function App() {
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
+
+  // Save active page to localStorage
+  useEffect(() => {
+    localStorage.setItem('last_active_page', activePage);
+  }, [activePage]);
 
   // PWA Install Prompt Listener
   useEffect(() => {
@@ -535,6 +541,12 @@ export default function App() {
           >
             <BookOpen size={16} /> Yearbook
           </button>
+          <button
+            className={`app-tab-btn ${activePage === 'doubleprint' ? 'active' : ''}`}
+            onClick={() => setActivePage('doubleprint')}
+          >
+            <Printer size={16} /> Double Print
+          </button>
         </div>
       </header>
 
@@ -542,6 +554,11 @@ export default function App() {
         {/* Yearbook Page */}
         {activePage === 'yearbook' && (
           <YearbookPage isDarkMode={isDarkMode} />
+        )}
+
+        {/* Double Print Page */}
+        {activePage === 'doubleprint' && (
+          <DoublePrintPage isDarkMode={isDarkMode} />
         )}
 
         {/* Photo Frame Page */}
