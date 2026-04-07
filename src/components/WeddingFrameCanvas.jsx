@@ -1,15 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 
-export default function DoublePrintCanvas({ 
+export default function WeddingFrameCanvas({ 
   photo, 
   orientation, 
-  splitMode, 
   customNames, 
   customDate, 
   fontFamily, 
   fontWeight = 'normal',
   fontSizeScale = 100,
-  showDashedLine, 
   imageZoom,
   imageOffsetX,
   imageOffsetY,
@@ -66,14 +64,7 @@ export default function DoublePrintCanvas({
     ctx.fillRect(0, 0, printWidth, printHeight);
 
       // Define sub-boxes based on splitMode
-      const boxes = [];
-      if (splitMode === 'vertical') { // Left / Right
-         boxes.push({ x: 0, y: 0, w: printWidth / 2, h: printHeight });
-         boxes.push({ x: printWidth / 2, y: 0, w: printWidth / 2, h: printHeight });
-      } else { // horizontal // Top / Bottom
-         boxes.push({ x: 0, y: 0, w: printWidth, h: printHeight / 2 });
-         boxes.push({ x: 0, y: printHeight / 2, w: printWidth, h: printHeight / 2 });
-      }
+      const boxes = [ { x: 0, y: 0, w: printWidth, h: printHeight } ];
 
       boxes.forEach(box => {
         const baseDim = Math.min(box.w, box.h);
@@ -142,30 +133,13 @@ export default function DoublePrintCanvas({
         ctx.fillText(customDate, box.x + box.w / 2, textCenterY + (nameFontSize * 0.2));
       });
 
-      // 2. Draw Dashed line if enabled
-      if (showDashedLine) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.setLineDash([20, 15]); // Dash length, space length
-        ctx.strokeStyle = "rgba(0, 0, 0, 0.4)";
-        ctx.lineWidth = 3;
 
-        if (splitMode === 'vertical') {
-          ctx.moveTo(printWidth / 2, 0);
-          ctx.lineTo(printWidth / 2, printHeight);
-        } else {
-          ctx.moveTo(0, printHeight / 2);
-          ctx.lineTo(printWidth, printHeight / 2);
-        }
-        ctx.stroke();
-        ctx.restore();
-      }
 
     // Output to base64
     const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
     onCanvasReady(dataUrl);
 
-  }, [imageLoaded, fontLoadedTime, orientation, splitMode, customNames, customDate, fontFamily, fontWeight, fontSizeScale, showDashedLine, imageZoom, imageOffsetX, imageOffsetY, imageMargin, onCanvasReady]);
+  }, [imageLoaded, fontLoadedTime, orientation, customNames, customDate, fontFamily, fontWeight, fontSizeScale, imageZoom, imageOffsetX, imageOffsetY, imageMargin, onCanvasReady]);
 
   const handlePointerDown = (e) => {
     setIsDragging(true);

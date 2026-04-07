@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import DoublePrintCanvas from '../components/DoublePrintCanvas';
+import WeddingFrameCanvas from '../components/WeddingFrameCanvas';
 import { generateDisplayUrl } from '../utils/imageOptimization';
 import {
   Upload as UploadIcon,
@@ -19,49 +19,43 @@ const FONT_OPTIONS = [
   { id: 'Dancing Script', label: 'Dancing Script' }
 ];
 
-export default function DoublePrintPage({ isDarkMode }) {
+export default function WeddingFramePage({ isDarkMode }) {
   const [photo, setPhoto] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
 
   // Layout Controls
   const [orientation, setOrientation] = useState('landscape'); // 'portrait' | 'landscape'
-  const [splitMode, setSplitMode] = useState('vertical'); // 'vertical' | 'horizontal'
-  const [printerProfile, setPrinterProfile] = useState(() => localStorage.getItem('dp_printerProfile') || 'cp1000');
+  const [printerProfile, setPrinterProfile] = useState(() => localStorage.getItem('wf_printerProfile') || 'cp1000');
 
   // Custom Content
-  const [customNames, setCustomNames] = useState(() => localStorage.getItem('dp_customNames') || 'Trung Hiếu & Hồng Hạnh');
-  const [customDate, setCustomDate] = useState(() => localStorage.getItem('dp_customDate') || '12 tháng 04 năm 2026');
+  const [customNames, setCustomNames] = useState(() => localStorage.getItem('wf_customNames') || 'Trung Hiếu & Hồng Hạnh');
+  const [customDate, setCustomDate] = useState(() => localStorage.getItem('wf_customDate') || '12 tháng 04 năm 2026');
 
   // Style and Adjustments
-  const [fontFamily, setFontFamily] = useState(() => localStorage.getItem('dp_fontFamily') || '1FTV-Blushing-Rose');
-  const [fontWeight, setFontWeight] = useState(() => localStorage.getItem('dp_fontWeight') || 'normal');
-  const [fontSizeScale, setFontSizeScale] = useState(() => Number(localStorage.getItem('dp_fontSizeScale')) || 100);
+  const [fontFamily, setFontFamily] = useState(() => localStorage.getItem('wf_fontFamily') || '1FTV-Blushing-Rose');
+  const [fontWeight, setFontWeight] = useState(() => localStorage.getItem('wf_fontWeight') || 'normal');
+  const [fontSizeScale, setFontSizeScale] = useState(() => Number(localStorage.getItem('wf_fontSizeScale')) || 100);
   const [customFontUrl, setCustomFontUrl] = useState(null);
-  const [showDashedLine, setShowDashedLine] = useState(() => {
-    const saved = localStorage.getItem('dp_showDashedLine');
-    return saved !== null ? saved === 'true' : true;
-  });
 
   const [imageMargin, setImageMargin] = useState(() => {
-    const v = localStorage.getItem('dp_imageMargin');
+    const v = localStorage.getItem('wf_imageMargin');
     return v !== null ? Number(v) : 3;
   });
 
   // Save settings to LocalStorage when they change
   useEffect(() => {
-    localStorage.setItem('dp_printerProfile', printerProfile);
-    localStorage.setItem('dp_customNames', customNames);
-    localStorage.setItem('dp_customDate', customDate);
-    localStorage.setItem('dp_showDashedLine', showDashedLine.toString());
-    localStorage.setItem('dp_fontWeight', fontWeight);
-    localStorage.setItem('dp_fontSizeScale', fontSizeScale.toString());
-    localStorage.setItem('dp_imageMargin', imageMargin.toString());
+    localStorage.setItem('wf_printerProfile', printerProfile);
+    localStorage.setItem('wf_customNames', customNames);
+    localStorage.setItem('wf_customDate', customDate);
+    localStorage.setItem('wf_fontWeight', fontWeight);
+    localStorage.setItem('wf_fontSizeScale', fontSizeScale.toString());
+    localStorage.setItem('wf_imageMargin', imageMargin.toString());
 
     // Only persist built-in fonts (CustomFont_ URLs expire upon reload)
     if (!fontFamily.startsWith('CustomFont_')) {
-      localStorage.setItem('dp_fontFamily', fontFamily);
+      localStorage.setItem('wf_fontFamily', fontFamily);
     }
-  }, [printerProfile, customNames, customDate, fontFamily, showDashedLine, fontWeight, fontSizeScale, imageMargin]);
+  }, [printerProfile, customNames, customDate, fontFamily, fontWeight, fontSizeScale, imageMargin]);
 
   const [imageZoom, setImageZoom] = useState(80);
   const [imageOffsetX, setImageOffsetX] = useState(0);
@@ -94,11 +88,9 @@ export default function DoublePrintPage({ isDarkMode }) {
       img.onload = () => {
         const isLandscapePhoto = img.width > img.height;
         if (isLandscapePhoto) {
-          setOrientation('portrait');
-          setSplitMode('horizontal'); // Top/Bottom split for landscape photos
-        } else {
           setOrientation('landscape');
-          setSplitMode('vertical'); // Left/Right split for portrait photos
+        } else {
+          setOrientation('portrait');
         }
       };
       img.src = displayUrl;
@@ -257,15 +249,7 @@ export default function DoublePrintPage({ isDarkMode }) {
         </button>
       </div>
 
-      <h3 className="template-heading" style={{ marginTop: '1rem' }}>Split Mode</h3>
-      <div className="template-options">
-        <button className={`template-btn ${splitMode === 'vertical' ? 'active' : ''}`} onClick={() => setSplitMode('vertical')}>
-          Left / Right
-        </button>
-        <button className={`template-btn ${splitMode === 'horizontal' ? 'active' : ''}`} onClick={() => setSplitMode('horizontal')}>
-          Top / Bottom
-        </button>
-      </div>
+      <br/><br/>
     </div>
   );
 
@@ -351,15 +335,7 @@ export default function DoublePrintPage({ isDarkMode }) {
         )}
       </div>
 
-      <h3 className="template-heading" style={{ marginTop: '1.5rem' }}>Options</h3>
-      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem' }}>
-        <input
-          type="checkbox"
-          checked={showDashedLine}
-          onChange={(e) => setShowDashedLine(e.target.checked)}
-        />
-        Show Dashed Cutting Line
-      </label>
+
     </div>
   );
 
@@ -443,10 +419,10 @@ export default function DoublePrintPage({ isDarkMode }) {
       ) : (
         <>
           <Printer size={52} strokeWidth={1.2} className="yearbook-upload-icon" />
-          <h2 className="yearbook-upload-title">Double Print (4x6)</h2>
+          <h2 className="yearbook-upload-title">Wedding Frame (4x6)</h2>
           <p className="yearbook-upload-desc">
-            Upload a photo to automatically duplicate<br />
-            <span>and layout for 4x6 printing</span>
+            Upload a photo to create<br />
+            <span>a 4x6 wedding layout</span>
           </p>
         </>
       )}
@@ -454,7 +430,7 @@ export default function DoublePrintPage({ isDarkMode }) {
   );
 
   return (
-    <div className="yearbook-page double-print-page">
+    <div className="yearbook-page wedding-frame-page">
       {!photo ? (
         <UploadZone />
       ) : (
@@ -481,16 +457,14 @@ export default function DoublePrintPage({ isDarkMode }) {
           </aside>
 
           <section className="yearbook-canvas-section print-canvas-section">
-            <DoublePrintCanvas
+            <WeddingFrameCanvas
               photo={photo}
               orientation={orientation}
-              splitMode={splitMode}
               customNames={customNames}
               customDate={customDate}
               fontFamily={fontFamily}
               fontWeight={fontWeight}
               fontSizeScale={fontSizeScale}
-              showDashedLine={showDashedLine}
               imageZoom={imageZoom}
               imageOffsetX={imageOffsetX}
               imageOffsetY={imageOffsetY}
