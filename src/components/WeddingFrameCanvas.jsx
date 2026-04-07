@@ -12,6 +12,8 @@ export default function WeddingFrameCanvas({
   imageOffsetX,
   imageOffsetY,
   imageMargin = 3,
+  textAreaHeight = 23,
+  textMargin = 5,
   onPanChange,
   onZoomChange,
   onCanvasReady 
@@ -69,7 +71,8 @@ export default function WeddingFrameCanvas({
       boxes.forEach(box => {
         const baseDim = Math.min(box.w, box.h);
         const margin = baseDim * (imageMargin / 100); 
-        const bottomTextSpace = baseDim * 0.23; // 23% height reserved for text
+        const bottomTextSpace = baseDim * (textAreaHeight / 100);
+        const textPad = baseDim * (textMargin / 100);
 
         // Padded Image Area
         const imgBoxX = box.x + margin;
@@ -116,8 +119,8 @@ export default function WeddingFrameCanvas({
         const nameFontSize = 28 * fontScale * (fontSizeScale / 100);
         const dateFontSize = 14 * fontScale * (fontSizeScale / 100);
 
-        // Center text vertically in the text area
-        const textCenterY = textAreaY + (textAreaH / 2);
+        // Center text vertically in the text area with padding
+        const textCenterY = textAreaY + textPad + (textAreaH - textPad * 2) / 2;
 
         // Draw Name
         ctx.textAlign = 'center';
@@ -139,7 +142,7 @@ export default function WeddingFrameCanvas({
     const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
     onCanvasReady(dataUrl);
 
-  }, [imageLoaded, fontLoadedTime, orientation, customNames, customDate, fontFamily, fontWeight, fontSizeScale, imageZoom, imageOffsetX, imageOffsetY, imageMargin, onCanvasReady]);
+  }, [imageLoaded, fontLoadedTime, orientation, customNames, customDate, fontFamily, fontWeight, fontSizeScale, imageZoom, imageOffsetX, imageOffsetY, imageMargin, textAreaHeight, textMargin, onCanvasReady]);
 
   const handlePointerDown = (e) => {
     setIsDragging(true);

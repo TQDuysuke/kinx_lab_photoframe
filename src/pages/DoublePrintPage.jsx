@@ -46,6 +46,14 @@ export default function DoublePrintPage({ isDarkMode }) {
     const v = localStorage.getItem('dp_imageMargin');
     return v !== null ? Number(v) : 3;
   });
+  const [textAreaHeight, setTextAreaHeight] = useState(() => {
+    const v = localStorage.getItem('dp_textAreaHeight');
+    return v !== null ? Number(v) : 23;
+  });
+  const [textMargin, setTextMargin] = useState(() => {
+    const v = localStorage.getItem('dp_textMargin');
+    return v !== null ? Number(v) : 5;
+  });
 
   // Save settings to LocalStorage when they change
   useEffect(() => {
@@ -56,12 +64,14 @@ export default function DoublePrintPage({ isDarkMode }) {
     localStorage.setItem('dp_fontWeight', fontWeight);
     localStorage.setItem('dp_fontSizeScale', fontSizeScale.toString());
     localStorage.setItem('dp_imageMargin', imageMargin.toString());
+    localStorage.setItem('dp_textAreaHeight', textAreaHeight.toString());
+    localStorage.setItem('dp_textMargin', textMargin.toString());
 
     // Only persist built-in fonts (CustomFont_ URLs expire upon reload)
     if (!fontFamily.startsWith('CustomFont_')) {
       localStorage.setItem('dp_fontFamily', fontFamily);
     }
-  }, [printerProfile, customNames, customDate, fontFamily, showDashedLine, fontWeight, fontSizeScale, imageMargin]);
+  }, [printerProfile, customNames, customDate, fontFamily, showDashedLine, fontWeight, fontSizeScale, imageMargin, textAreaHeight, textMargin]);
 
   const [imageZoom, setImageZoom] = useState(80);
   const [imageOffsetX, setImageOffsetX] = useState(0);
@@ -379,6 +389,30 @@ export default function DoublePrintPage({ isDarkMode }) {
         />
       </div>
       <div className="control-group" style={{ marginTop: '0.75rem' }}>
+        <label className="control-label">Text Area Height: {textAreaHeight}%</label>
+        <input
+          type="range"
+          min="5"
+          max="40"
+          step="0.5"
+          value={textAreaHeight}
+          onChange={(e) => setTextAreaHeight(Number(e.target.value))}
+          className="slider"
+        />
+      </div>
+      <div className="control-group" style={{ marginTop: '0.75rem' }}>
+        <label className="control-label">Text Padding: {textMargin}%</label>
+        <input
+          type="range"
+          min="0"
+          max="15"
+          step="0.5"
+          value={textMargin}
+          onChange={(e) => setTextMargin(Number(e.target.value))}
+          className="slider"
+        />
+      </div>
+      <div className="control-group" style={{ marginTop: '0.75rem' }}>
         <label className="control-label">Zoom Scale: {imageZoom}%</label>
         <input
           type="range"
@@ -495,6 +529,8 @@ export default function DoublePrintPage({ isDarkMode }) {
               imageOffsetX={imageOffsetX}
               imageOffsetY={imageOffsetY}
               imageMargin={imageMargin}
+              textAreaHeight={textAreaHeight}
+              textMargin={textMargin}
               onPanChange={handlePanChange}
               onZoomChange={handleZoomChange}
               onCanvasReady={(dataUrl) => { canvasDataRef.current = dataUrl; }}
