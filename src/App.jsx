@@ -4,6 +4,7 @@ import TemplateSelector from './components/TemplateSelector';
 import FrameCanvas from './components/FrameCanvas';
 import YearbookPage from './pages/YearbookPage';
 import DoublePrintPage from './pages/DoublePrintPage';
+import FourthPrintPage from './pages/FourthPrintPage';
 import WeddingFramePage from './pages/WeddingFramePage';
 import DualPrintPage from './pages/DualPrintPage';
 import { extractExif } from './utils/extractExif';
@@ -550,6 +551,12 @@ export default function App() {
             <Printer size={16} /> Double Print
           </button>
           <button
+            className={`app-tab-btn ${activePage === 'fourthprint' ? 'active' : ''}`}
+            onClick={() => setActivePage('fourthprint')}
+          >
+            <Printer size={16} /> Fourth Print
+          </button>
+          <button
             className={`app-tab-btn ${activePage === 'dualprint' ? 'active' : ''}`}
             onClick={() => setActivePage('dualprint')}
           >
@@ -571,9 +578,10 @@ export default function App() {
         )}
 
         {/* Double Print Page */}
-        {activePage === 'doubleprint' && (
-          <DoublePrintPage isDarkMode={isDarkMode} />
-        )}
+        {activePage === 'doubleprint' && <DoublePrintPage isDarkMode={isDarkMode} />}
+
+        {/* Fourth Print Page */}
+        {activePage === 'fourthprint' && <FourthPrintPage isDarkMode={isDarkMode} />}
 
         {/* Dual Print Page */}
         {activePage === 'dualprint' && (
