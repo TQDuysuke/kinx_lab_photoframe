@@ -5,6 +5,7 @@ import FrameCanvas from './components/FrameCanvas';
 import YearbookPage from './pages/YearbookPage';
 import DoublePrintPage from './pages/DoublePrintPage';
 import WeddingFramePage from './pages/WeddingFramePage';
+import DualPrintPage from './pages/DualPrintPage';
 import { extractExif } from './utils/extractExif';
 import { iphoneFrame } from './templates/iphoneFrame';
 import { Image as ImageIcon, Download, X, Moon, Sun, LayoutTemplate, SlidersHorizontal, Type, ArrowDownToLine, BookOpen, Camera, Printer } from 'lucide-react';
@@ -549,6 +550,12 @@ export default function App() {
             <Printer size={16} /> Double Print
           </button>
           <button
+            className={`app-tab-btn ${activePage === 'dualprint' ? 'active' : ''}`}
+            onClick={() => setActivePage('dualprint')}
+          >
+            <LayoutTemplate size={16} /> Dual Print
+          </button>
+          <button
             className={`app-tab-btn ${activePage === 'weddingframe' ? 'active' : ''}`}
             onClick={() => setActivePage('weddingframe')}
           >
@@ -566,6 +573,11 @@ export default function App() {
         {/* Double Print Page */}
         {activePage === 'doubleprint' && (
           <DoublePrintPage isDarkMode={isDarkMode} />
+        )}
+
+        {/* Dual Print Page */}
+        {activePage === 'dualprint' && (
+          <DualPrintPage isDarkMode={isDarkMode} />
         )}
 
         {/* Wedding Frame Page */}
