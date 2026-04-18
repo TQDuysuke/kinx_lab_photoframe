@@ -27,8 +27,8 @@ export default function PngFramePage({ isDarkMode }) {
   const [isUploadingB, setIsUploadingB] = useState(false);
 
   // Layout
-  const [orientation, setOrientation] = useState('landscape');
-  const [splitMode, setSplitMode] = useState(() => localStorage.getItem('pf_splitMode') || 'vertical');
+  const [orientation, setOrientation] = useState('portrait');
+  const [splitMode, setSplitMode] = useState(() => localStorage.getItem('pf_splitMode') || 'horizontal');
   const [printerProfile, setPrinterProfile] = useState(
     () => localStorage.getItem('pf_printerProfile') || 'cp1000'
   );
@@ -41,6 +41,32 @@ export default function PngFramePage({ isDarkMode }) {
     const v = localStorage.getItem('pf_imageMargin');
     return v !== null ? Number(v) : 3;
   });
+
+  const handleFrameChange = useCallback((id, isLandscape) => {
+    setActiveFrameId(id);
+    if (mode === 'dual') {
+      setOrientation(isLandscape ? 'portrait' : 'landscape');
+      setSplitMode(isLandscape ? 'horizontal' : 'vertical');
+    } else {
+      setOrientation(isLandscape ? 'landscape' : 'portrait');
+    }
+  }, [mode]);
+
+  const handleModeChange = useCallback((newMode) => {
+    setMode(newMode);
+    if (newMode === 'single') setPhotoB(null);
+
+    const isLandscape = activeFrameId === 'default' 
+      ? true 
+      : (savedFrames.find(f => f.id === activeFrameId)?.isLandscape || false);
+    
+    if (newMode === 'dual') {
+      setOrientation(isLandscape ? 'portrait' : 'landscape');
+      setSplitMode(isLandscape ? 'horizontal' : 'vertical');
+    } else {
+      setOrientation(isLandscape ? 'landscape' : 'portrait');
+    }
+  }, [activeFrameId, savedFrames]);
 
   // Per-photo controls
   const [imageZoomA, setImageZoomA] = useState(100);
@@ -105,7 +131,7 @@ export default function PngFramePage({ isDarkMode }) {
       try {
         await saveCustomFrame(newFrame);
         setSavedFrames(prev => [...prev, newFrame]);
-        setActiveFrameId(id);
+        handleFrameChange(id, isLandscape);
       } catch (err) {
         console.error(err);
         alert("Không thể lưu khung. Có thể bộ nhớ Local của trình duyệt đã đầy, vui lòng xoá bớt khung cũ.");
@@ -149,11 +175,6 @@ export default function PngFramePage({ isDarkMode }) {
         const isLandscape = img.width > img.height;
         setPhoto({ id, file, displayUrl, isLandscape });
         setZoom(100); setOffX(0); setOffY(0);
-        // Auto-detect orientation from Photo A
-        if (slot === 'A') {
-          setOrientation(isLandscape ? 'portrait' : 'landscape');
-          setSplitMode(isLandscape ? 'horizontal' : 'vertical');
-        }
         setUploading(false);
       };
       img.onerror = () => setUploading(false);
@@ -314,13 +335,13 @@ export default function PngFramePage({ isDarkMode }) {
   const renderFrameSelection = () => (
     <div className="settings-section" style={{ marginTop: '1rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
       <h3 className="template-heading">Frame Overlay</h3>
-      <div className="thumbnail-strip" style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '0.2rem', marginTop: '0.5rem' }}>
+      <div className="thumbnail-strip" style={{ display: 'flex', flexDirection: 'row', gap: '0.75rem', overflowX: 'auto', paddingBottom: '0.2rem', marginTop: '0.5rem' }}>
         
         {/* Default Frame */}
         <div 
           className={`thumbnail-item ${activeFrameId === 'default' ? 'active' : ''}`}
-          style={{ width: '60px', height: '90px', flexShrink: 0, cursor: 'pointer', border: activeFrameId === 'default' ? '2px solid var(--accent)' : '1px solid var(--border)', borderRadius: '6px', overflow: 'hidden' }}
-          onClick={() => setActiveFrameId('default')}
+          style={{ width: '90px', height: '60px', flexShrink: 0, cursor: 'pointer', border: activeFrameId === 'default' ? '2px solid var(--accent)' : '1px solid var(--border)', borderRadius: '6px', overflow: 'hidden' }}
+          onClick={() => handleFrameChange('default', true)}
         >
           <div style={{ width: '100%', height: '100%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ fontSize: '0.7rem', color: '#475569', textAlign: 'center', lineHeight: '1.2' }}>Default<br/>FPT</span>
@@ -333,7 +354,7 @@ export default function PngFramePage({ isDarkMode }) {
             key={f.id}
             className={`thumbnail-item ${activeFrameId === f.id ? 'active' : ''}`}
             style={{ width: f.isLandscape ? '90px' : '60px', height: f.isLandscape ? '60px' : '90px', flexShrink: 0, cursor: 'pointer', position: 'relative', border: activeFrameId === f.id ? '2px solid var(--accent)' : '1px solid var(--border)', borderRadius: '6px', backgroundColor: '#fdf2f8', display: 'flex', alignItems: 'center' }}
-            onClick={() => setActiveFrameId(f.id)}
+            onClick={() => handleFrameChange(f.id, f.isLandscape)}
           >
             <img src={f.dataUrl} alt={f.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', margin: 'auto' }} />
             <button className="remove-photo-btn" onClick={(e) => handleDeleteFrame(f.id, e)} title="Delete" style={{ width: '18px', height: '18px', top: '-6px', right: '-6px' }}><Trash2 size={10} /></button>
@@ -366,8 +387,7 @@ export default function PngFramePage({ isDarkMode }) {
 
   // Determine if we're ready to show the editor
   const singleReady = mode === 'single' && photoA;
-  const dualSameOrientation = photoA && photoB && (photoA.isLandscape === photoB.isLandscape);
-  const dualReady   = mode === 'dual' && dualSameOrientation;
+  const dualReady   = mode === 'dual' && photoA && photoB;
   const showEditor  = singleReady || dualReady;
 
   const activeFrameSrc = activeFrameId === 'default' 
@@ -404,21 +424,14 @@ export default function PngFramePage({ isDarkMode }) {
           {/* Mode selector */}
           <div className="template-options mode-btn" onClick={(e) => e.stopPropagation()}>
             <button className={`template-btn ${mode === 'single' ? 'active' : ''}`}
-              onClick={() => { setMode('single'); setPhotoB(null); }}>
+              onClick={() => handleModeChange('single')}>
               Single Photo
             </button>
             <button className={`template-btn ${mode === 'dual' ? 'active' : ''}`}
-              onClick={() => setMode('dual')}>
+              onClick={() => handleModeChange('dual')}>
               Dual Photos
             </button>
           </div>
-
-          {/* Orientation mismatch warning (dual mode) */}
-          {mode === 'dual' && photoA && photoB && !dualSameOrientation && (
-            <div style={{ color: '#ef4444', background: '#fef2f2', padding: '0.75rem 1.5rem', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span>⚠️</span> Hai ảnh phải cùng tỷ lệ chiều (cùng dọc hoặc cùng ngang). Vui lòng chọn lại.
-            </div>
-          )}
 
           {/* Drop slots */}
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -463,25 +476,8 @@ export default function PngFramePage({ isDarkMode }) {
                   () => { setImageOffsetXA(0); setImageOffsetYA(0); }
                 )}
                 <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '1rem' }}>
-                  {renderLayoutPanel()}
                   {renderFrameSelection()}
                 </div>
-
-                {/* In single mode, show mode switcher + print in left sidebar */}
-                {mode === 'single' && (
-                  <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '1rem' }}>
-                    <div className="settings-section">
-                      <h3 className="template-heading">Mode</h3>
-                      <div className="template-options">
-                        <button className={`template-btn ${mode === 'single' ? 'active' : ''}`}
-                          onClick={() => setMode('single')}>Single</button>
-                        <button className={`template-btn ${mode === 'dual' ? 'active' : ''}`}
-                          onClick={() => { setMode('dual'); setPhotoA(null); }}>Dual</button>
-                      </div>
-                    </div>
-                    {renderPrintPanel()}
-                  </div>
-                )}
               </div>
             </div>
           </aside>
@@ -511,7 +507,8 @@ export default function PngFramePage({ isDarkMode }) {
           <aside className="yearbook-sidebar">
             <div className="panel-box">
               <div className="yearbook-sidebar-controls" style={{ maxHeight: 'none', overflowY: 'visible' }}>
-                {mode === 'dual' ? (
+                
+                {mode === 'dual' && (
                   <>
                     {renderPhotoSlot(
                       'Photo B', photoB, isUploadingB, 'pf-file-B',
@@ -525,27 +522,26 @@ export default function PngFramePage({ isDarkMode }) {
                       imageOffsetYB, setImageOffsetYB,
                       () => { setImageOffsetXB(0); setImageOffsetYB(0); }
                     )}
-                    <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '1rem' }}>
-                      <div className="settings-section">
-                        <h3 className="template-heading">Mode</h3>
-                        <div className="template-options">
-                          <button className={`template-btn ${mode === 'single' ? 'active' : ''}`}
-                            onClick={() => { setMode('single'); setPhotoB(null); }}>Single</button>
-                          <button className={`template-btn ${mode === 'dual' ? 'active' : ''}`}
-                            onClick={() => setMode('dual')}>Dual</button>
-                        </div>
-                      </div>
-
-                      {renderPrintPanel()}
-                    </div>
+                    <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '1rem', marginBottom: '1rem' }}></div>
                   </>
-                ) : (
-                  /* Single mode right sidebar placeholder — content is in left sidebar */
-                  <div className="settings-section" style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center' }}>
-                    <Layers size={40} strokeWidth={1} style={{ margin: '2rem auto 0.75rem', display: 'block', opacity: 0.3 }} />
-                    <p>Frame-FPT is overlaid<br />on your photo</p>
-                  </div>
                 )}
+
+                {renderLayoutPanel()}
+                
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '1rem' }}>
+                  <div className="settings-section">
+                    <h3 className="template-heading">Mode</h3>
+                    <div className="template-options">
+                      <button className={`template-btn ${mode === 'single' ? 'active' : ''}`}
+                        onClick={() => handleModeChange('single')}>Single</button>
+                      <button className={`template-btn ${mode === 'dual' ? 'active' : ''}`}
+                        onClick={() => handleModeChange('dual')}>Dual</button>
+                    </div>
+                  </div>
+
+                  {renderPrintPanel()}
+                </div>
+
               </div>
             </div>
           </aside>
