@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import PngFrameCanvas from '../components/PngFrameCanvas';
 import { generateDisplayUrl } from '../utils/imageOptimization';
-import { Download, X, Printer, ImageIcon, Layers, Upload, Trash2 } from 'lucide-react';
+import { Download, X, Printer, ImageIcon, Layers, Upload, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { saveCustomFrame, getCustomFrames, deleteCustomFrame } from '../utils/indexedDB';
 
 export default function PngFramePage({ isDarkMode }) {
@@ -27,7 +27,7 @@ export default function PngFramePage({ isDarkMode }) {
   const [isUploadingB, setIsUploadingB] = useState(false);
 
   // Layout
-  const [orientation, setOrientation] = useState('portrait');
+  const [orientation, setOrientation] = useState(() => localStorage.getItem('pf_orientation') || 'portrait');
   const [splitMode, setSplitMode] = useState(() => localStorage.getItem('pf_splitMode') || 'horizontal');
   const [printerProfile, setPrinterProfile] = useState(
     () => localStorage.getItem('pf_printerProfile') || 'cp1000'
@@ -41,6 +41,11 @@ export default function PngFramePage({ isDarkMode }) {
     const v = localStorage.getItem('pf_imageMargin');
     return v !== null ? Number(v) : 3;
   });
+
+  // UI state
+  const [isFitAExpanded, setIsFitAExpanded] = useState(false);
+  const [isFitBExpanded, setIsFitBExpanded] = useState(false);
+  const [isPrinterExpanded, setIsPrinterExpanded] = useState(false);
 
   const handleFrameChange = useCallback((id, isLandscape) => {
     setActiveFrameId(id);
@@ -69,12 +74,12 @@ export default function PngFramePage({ isDarkMode }) {
   }, [activeFrameId, savedFrames]);
 
   // Per-photo controls
-  const [imageZoomA, setImageZoomA] = useState(100);
-  const [imageOffsetXA, setImageOffsetXA] = useState(0);
-  const [imageOffsetYA, setImageOffsetYA] = useState(0);
-  const [imageZoomB, setImageZoomB] = useState(100);
-  const [imageOffsetXB, setImageOffsetXB] = useState(0);
-  const [imageOffsetYB, setImageOffsetYB] = useState(0);
+  const [imageZoomA, setImageZoomA] = useState(() => Number(localStorage.getItem('pf_imageZoomA')) || 100);
+  const [imageOffsetXA, setImageOffsetXA] = useState(() => Number(localStorage.getItem('pf_imageOffsetXA')) || 0);
+  const [imageOffsetYA, setImageOffsetYA] = useState(() => Number(localStorage.getItem('pf_imageOffsetYA')) || 0);
+  const [imageZoomB, setImageZoomB] = useState(() => Number(localStorage.getItem('pf_imageZoomB')) || 100);
+  const [imageOffsetXB, setImageOffsetXB] = useState(() => Number(localStorage.getItem('pf_imageOffsetXB')) || 0);
+  const [imageOffsetYB, setImageOffsetYB] = useState(() => Number(localStorage.getItem('pf_imageOffsetYB')) || 0);
 
   const [isDownloading, setIsDownloading] = useState(false);
   const canvasDataRef = useRef(null);
@@ -84,11 +89,20 @@ export default function PngFramePage({ isDarkMode }) {
     localStorage.setItem('pf_printerProfile', printerProfile);
     localStorage.setItem('pf_activeFrameId', activeFrameId);
     localStorage.setItem('pf_splitMode', splitMode);
+    localStorage.setItem('pf_orientation', orientation);
     localStorage.setItem('pf_showDashedLine', showDashedLine.toString());
     localStorage.setItem('pf_imageMargin', imageMargin.toString());
+    localStorage.setItem('pf_imageZoomA', imageZoomA.toString());
+    localStorage.setItem('pf_imageOffsetXA', imageOffsetXA.toString());
+    localStorage.setItem('pf_imageOffsetYA', imageOffsetYA.toString());
+    localStorage.setItem('pf_imageZoomB', imageZoomB.toString());
+    localStorage.setItem('pf_imageOffsetXB', imageOffsetXB.toString());
+    localStorage.setItem('pf_imageOffsetYB', imageOffsetYB.toString());
   }, [
-    mode, printerProfile, activeFrameId, splitMode, 
-    showDashedLine, imageMargin
+    mode, printerProfile, activeFrameId, splitMode, orientation,
+    showDashedLine, imageMargin,
+    imageZoomA, imageOffsetXA, imageOffsetYA,
+    imageZoomB, imageOffsetXB, imageOffsetYB
   ]);
 
   // Upload Custom PNG Frame
@@ -113,9 +127,9 @@ export default function PngFramePage({ isDarkMode }) {
         return;
       }
 
-      // Resize up/down to strictly 3600x2400 or 2400x3600 (quality scaling)
-      const targetW = isLandscape ? 3600 : 2400;
-      const targetH = isLandscape ? 2400 : 3600;
+      // Keep original dimensions to preserve 300ppi+ quality
+      const targetW = img.width;
+      const targetH = img.height;
       
       const canvas = document.createElement('canvas');
       canvas.width = targetW;
@@ -267,38 +281,47 @@ export default function PngFramePage({ isDarkMode }) {
     </div>
   );
 
-  const renderImageFit = (label, zoom, setZoom, ox, setOx, oy, setOy, resetFn) => (
+  const renderImageFit = (label, zoom, setZoom, ox, setOx, oy, setOy, resetFn, isExpanded, setIsExpanded) => (
     <div className="settings-section">
-      <h3 className="template-heading">{mode === 'dual' ? `${label} — ` : ''}Fit & Pan</h3>
-      <div className="control-group">
-        <label className="control-label">Zoom: {zoom}%</label>
-        <input type="range" min="50" max="200" value={zoom}
-          onChange={(e) => setZoom(Number(e.target.value))} className="slider" />
+      <h3 className="template-heading" onClick={() => setIsExpanded(!isExpanded)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>{mode === 'dual' ? `${label} - ` : ''}Fit & Pan</span>
+        {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+      </h3>
+      <div className={`collapsible-content ${isExpanded ? 'expanded' : 'collapsed'}`}>
+        <div className="control-group">
+          <label className="control-label">Zoom: {zoom}%</label>
+          <input type="range" min="50" max="200" value={zoom}
+            onChange={(e) => setZoom(Number(e.target.value))} className="slider" />
+        </div>
+        <div className="control-group" style={{ marginTop: '0.5rem' }}>
+          <label className="control-label">Pan X: {ox}%</label>
+          <input type="range" min="-100" max="100" value={ox}
+            onChange={(e) => setOx(Number(e.target.value))} className="slider" />
+        </div>
+        <div className="control-group" style={{ marginTop: '0.5rem' }}>
+          <label className="control-label">Pan Y: {oy}%</label>
+          <input type="range" min="-100" max="100" value={oy}
+            onChange={(e) => setOy(Number(e.target.value))} className="slider" />
+        </div>
+        <button className="template-btn" style={{ width: '100%', marginTop: '0.75rem', fontSize: '0.8rem' }}
+          onClick={resetFn}>Reset</button>
       </div>
-      <div className="control-group" style={{ marginTop: '0.5rem' }}>
-        <label className="control-label">Pan X: {ox}%</label>
-        <input type="range" min="-100" max="100" value={ox}
-          onChange={(e) => setOx(Number(e.target.value))} className="slider" />
-      </div>
-      <div className="control-group" style={{ marginTop: '0.5rem' }}>
-        <label className="control-label">Pan Y: {oy}%</label>
-        <input type="range" min="-100" max="100" value={oy}
-          onChange={(e) => setOy(Number(e.target.value))} className="slider" />
-      </div>
-      <button className="template-btn"
-        style={{ marginTop: '0.75rem', width: '100%', justifyContent: 'center' }}
-        onClick={resetFn}>Reset Pan</button>
     </div>
   );
 
   const renderLayoutPanel = () => (
     <div className="settings-section">
-      <h3 className="template-heading">Target Printer</h3>
-      <div className="template-options">
-        <button className={`template-btn ${printerProfile === 'cp1000' ? 'active' : ''}`}
-          onClick={() => setPrinterProfile('cp1000')}>Canon CP1000</button>
-        <button className={`template-btn ${printerProfile === 'standard' ? 'active' : ''}`}
-          onClick={() => setPrinterProfile('standard')}>Standard (Any)</button>
+      <h3 className="template-heading" onClick={() => setIsPrinterExpanded(!isPrinterExpanded)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>Target Printer</span>
+        {isPrinterExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+      </h3>
+      <div className={`collapsible-content ${isPrinterExpanded ? 'expanded' : 'collapsed'}`}>
+        <div className="template-options">
+          <button className={`template-btn ${printerProfile === 'cp1000' ? 'active' : ''}`}
+            onClick={() => setPrinterProfile('cp1000')}>Canon CP1000</button>
+          <button className={`template-btn ${printerProfile === 'standard' ? 'active' : ''}`}
+            onClick={() => setPrinterProfile('standard')}>Standard (Any)</button>
+        </div>
       </div>
       <h3 className="template-heading" style={{ marginTop: '1rem' }}>Orientation</h3>
       <div className="template-options">
@@ -391,8 +414,8 @@ export default function PngFramePage({ isDarkMode }) {
   const showEditor  = singleReady || dualReady;
 
   const activeFrameSrc = activeFrameId === 'default' 
-    ? '/Frame-FPT.png' 
-    : savedFrames.find(f => f.id === activeFrameId)?.dataUrl || '/Frame-FPT.png';
+    ? '/Default-frame.png' 
+    : savedFrames.find(f => f.id === activeFrameId)?.dataUrl || '/Default-frame.png';
 
   return (
     <div className="yearbook-page double-print-page">
@@ -473,7 +496,8 @@ export default function PngFramePage({ isDarkMode }) {
                   imageZoomA, setImageZoomA,
                   imageOffsetXA, setImageOffsetXA,
                   imageOffsetYA, setImageOffsetYA,
-                  () => { setImageOffsetXA(0); setImageOffsetYA(0); }
+                  () => { setImageZoomA(100); setImageOffsetXA(0); setImageOffsetYA(0); },
+                  isFitAExpanded, setIsFitAExpanded
                 )}
                 <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '1rem' }}>
                   {renderFrameSelection()}
@@ -520,7 +544,8 @@ export default function PngFramePage({ isDarkMode }) {
                       imageZoomB, setImageZoomB,
                       imageOffsetXB, setImageOffsetXB,
                       imageOffsetYB, setImageOffsetYB,
-                      () => { setImageOffsetXB(0); setImageOffsetYB(0); }
+                      () => { setImageZoomB(100); setImageOffsetXB(0); setImageOffsetYB(0); },
+                      isFitBExpanded, setIsFitBExpanded
                     )}
                     <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '1rem', marginBottom: '1rem' }}></div>
                   </>

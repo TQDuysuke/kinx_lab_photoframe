@@ -3,10 +3,7 @@ import Upload from './components/Upload';
 import TemplateSelector from './components/TemplateSelector';
 import FrameCanvas from './components/FrameCanvas';
 import YearbookPage from './pages/YearbookPage';
-import DoublePrintPage from './pages/DoublePrintPage';
-import FourthPrintPage from './pages/FourthPrintPage';
-import WeddingFramePage from './pages/WeddingFramePage';
-import DualPrintPage from './pages/DualPrintPage';
+import WeddingPrintPage from './pages/WeddingPrintPage';
 import PngFramePage from './pages/PngFramePage';
 import { extractExif } from './utils/extractExif';
 import { iphoneFrame } from './templates/iphoneFrame';
@@ -48,9 +45,14 @@ export default function App() {
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  // Sync dark mode preference to localStorage and listen for system changes
+  // Sync dark mode preference to localStorage and document root
   useEffect(() => {
     localStorage.setItem('photoframe-theme', isDarkMode ? 'dark' : 'light');
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark-theme');
+    } else {
+      document.documentElement.classList.remove('dark-theme');
+    }
   }, [isDarkMode]);
 
   useEffect(() => {
@@ -546,28 +548,10 @@ export default function App() {
             <BookOpen size={16} /> Yearbook
           </button>
           <button
-            className={`app-tab-btn ${activePage === 'doubleprint' ? 'active' : ''}`}
-            onClick={() => setActivePage('doubleprint')}
+            className={`app-tab-btn ${activePage === 'weddingprint' ? 'active' : ''}`}
+            onClick={() => setActivePage('weddingprint')}
           >
-            <Printer size={16} /> Double Print
-          </button>
-          <button
-            className={`app-tab-btn ${activePage === 'fourthprint' ? 'active' : ''}`}
-            onClick={() => setActivePage('fourthprint')}
-          >
-            <Printer size={16} /> Fourth Print
-          </button>
-          <button
-            className={`app-tab-btn ${activePage === 'dualprint' ? 'active' : ''}`}
-            onClick={() => setActivePage('dualprint')}
-          >
-            <LayoutTemplate size={16} /> Dual Print
-          </button>
-          <button
-            className={`app-tab-btn ${activePage === 'weddingframe' ? 'active' : ''}`}
-            onClick={() => setActivePage('weddingframe')}
-          >
-            <LayoutTemplate size={16} /> Wedding Frame
+            <Layers size={16} /> Wedding Print
           </button>
           <button
             className={`app-tab-btn ${activePage === 'pngframe' ? 'active' : ''}`}
@@ -584,19 +568,8 @@ export default function App() {
           <YearbookPage isDarkMode={isDarkMode} />
         )}
 
-        {/* Double Print Page */}
-        {activePage === 'doubleprint' && <DoublePrintPage isDarkMode={isDarkMode} />}
-
-        {/* Fourth Print Page */}
-        {activePage === 'fourthprint' && <FourthPrintPage isDarkMode={isDarkMode} />}
-
-        {/* Dual Print Page */}
-        {activePage === 'dualprint' && (
-          <DualPrintPage isDarkMode={isDarkMode} />
-        )}
-
-        {/* Wedding Frame Page */}
-        {activePage === 'weddingframe' && <WeddingFramePage isDarkMode={isDarkMode} />}
+        {/* Wedding Print Suite Page */}
+        {activePage === 'weddingprint' && <WeddingPrintPage isDarkMode={isDarkMode} />}
 
         {/* PNG Frame Page */}
         {activePage === 'pngframe' && <PngFramePage isDarkMode={isDarkMode} />}

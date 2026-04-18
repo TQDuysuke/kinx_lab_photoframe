@@ -4,10 +4,11 @@ import { generateDisplayUrl } from '../utils/imageOptimization';
 import {
   Download,
   X,
-  LayoutTemplate,
-  Type,
   Printer,
   ImageIcon,
+  ArrowLeft,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 
 const FONT_OPTIONS = [
@@ -16,7 +17,7 @@ const FONT_OPTIONS = [
   { id: 'Dancing Script', label: 'Dancing Script' },
 ];
 
-export default function DualPrintPage({ isDarkMode }) {
+export default function DualPrintPage({ isDarkMode, onBack }) {
   // --- Photos ---
   const [photoA, setPhotoA] = useState(null);
   const [photoB, setPhotoB] = useState(null);
@@ -24,8 +25,8 @@ export default function DualPrintPage({ isDarkMode }) {
   const [isUploadingB, setIsUploadingB] = useState(false);
 
   // --- Layout ---
-  const [orientation, setOrientation] = useState('landscape');
-  const [splitMode, setSplitMode] = useState('vertical');
+  const [orientation, setOrientation] = useState(() => localStorage.getItem('du_orientation') || 'landscape');
+  const [splitMode, setSplitMode] = useState(() => localStorage.getItem('du_splitMode') || 'vertical');
   const [printerProfile, setPrinterProfile] = useState(
     () => localStorage.getItem('du_printerProfile') || 'cp1000'
   );
@@ -62,18 +63,24 @@ export default function DualPrintPage({ isDarkMode }) {
     const v = localStorage.getItem('du_textAreaHeight');
     return v !== null ? Number(v) : 23;
   });
+
+  // UI state
+  const [isFitAExpanded, setIsFitAExpanded] = useState(false);
+  const [isFitBExpanded, setIsFitBExpanded] = useState(false);
+  const [isPrinterExpanded, setIsPrinterExpanded] = useState(false);
+  const [isTypographyExpanded, setIsTypographyExpanded] = useState(false);
   const [textMargin, setTextMargin] = useState(() => {
     const v = localStorage.getItem('du_textMargin');
     return v !== null ? Number(v) : 5;
   });
 
   // --- Per-photo Image Controls ---
-  const [imageZoomA, setImageZoomA] = useState(100);
-  const [imageOffsetXA, setImageOffsetXA] = useState(0);
-  const [imageOffsetYA, setImageOffsetYA] = useState(0);
-  const [imageZoomB, setImageZoomB] = useState(100);
-  const [imageOffsetXB, setImageOffsetXB] = useState(0);
-  const [imageOffsetYB, setImageOffsetYB] = useState(0);
+  const [imageZoomA, setImageZoomA] = useState(() => Number(localStorage.getItem('du_imageZoomA')) || 80);
+  const [imageOffsetXA, setImageOffsetXA] = useState(() => Number(localStorage.getItem('du_imageOffsetXA')) || 0);
+  const [imageOffsetYA, setImageOffsetYA] = useState(() => Number(localStorage.getItem('du_imageOffsetYA')) || 0);
+  const [imageZoomB, setImageZoomB] = useState(() => Number(localStorage.getItem('du_imageZoomB')) || 80);
+  const [imageOffsetXB, setImageOffsetXB] = useState(() => Number(localStorage.getItem('du_imageOffsetXB')) || 0);
+  const [imageOffsetYB, setImageOffsetYB] = useState(() => Number(localStorage.getItem('du_imageOffsetYB')) || 0);
 
   const [isDownloading, setIsDownloading] = useState(false);
   const [activeMobileTab, setActiveMobileTab] = useState(null);
@@ -90,10 +97,18 @@ export default function DualPrintPage({ isDarkMode }) {
     localStorage.setItem('du_imageMargin', imageMargin.toString());
     localStorage.setItem('du_textAreaHeight', textAreaHeight.toString());
     localStorage.setItem('du_textMargin', textMargin.toString());
+    localStorage.setItem('du_orientation', orientation);
+    localStorage.setItem('du_splitMode', splitMode);
+    localStorage.setItem('du_imageZoomA', imageZoomA.toString());
+    localStorage.setItem('du_imageOffsetXA', imageOffsetXA.toString());
+    localStorage.setItem('du_imageOffsetYA', imageOffsetYA.toString());
+    localStorage.setItem('du_imageZoomB', imageZoomB.toString());
+    localStorage.setItem('du_imageOffsetXB', imageOffsetXB.toString());
+    localStorage.setItem('du_imageOffsetYB', imageOffsetYB.toString());
     if (!fontFamily.startsWith('CustomFont_')) {
       localStorage.setItem('du_fontFamily', fontFamily);
     }
-  }, [printerProfile, customNames, customDate, fontFamily, fontWeight, fontSizeScale, showDashedLine, imageMargin, textAreaHeight, textMargin]);
+  }, [printerProfile, customNames, customDate, fontFamily, fontWeight, fontSizeScale, showDashedLine, imageMargin, textAreaHeight, textMargin, orientation, splitMode, imageZoomA, imageOffsetXA, imageOffsetYA, imageZoomB, imageOffsetXB, imageOffsetYB]);
 
   // --- Upload handlers ---
   const handleFileInput = useCallback(async (files, slot) => {
@@ -119,7 +134,7 @@ export default function DualPrintPage({ isDarkMode }) {
       img.onload = () => {
         const isLandscape = img.width > img.height;
         setPhoto({ id, file, displayUrl, isLandscape });
-        setZoom(100);
+        setZoom(80);
         setOffX(0);
         setOffY(0);
 
@@ -276,70 +291,68 @@ export default function DualPrintPage({ isDarkMode }) {
     </div>
   );
 
-  const renderImageFit = (label, zoom, setZoom, offsetX, setOffX, offsetY, setOffY, resetFn) => (
+  const renderImageFit = (label, zoom, setZoom, ox, setOx, oy, setOy, resetFn, isExpanded, setIsExpanded) => (
     <div className="settings-section">
-      <h3 className="template-heading">{label} — Fit & Pan</h3>
-      <div className="control-group">
-        <label className="control-label">Zoom: {zoom}%</label>
-        <input type="range" min="50" max="200" value={zoom}
-          onChange={(e) => setZoom(Number(e.target.value))} className="slider" />
+      <h3 className="template-heading" onClick={() => setIsExpanded(!isExpanded)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>{label} — Fit & Pan</span>
+        {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+      </h3>
+      <div className={`collapsible-content ${isExpanded ? 'expanded' : 'collapsed'}`}>
+        <div className="control-group">
+          <label className="control-label">Zoom: {zoom}%</label>
+          <input type="range" min="50" max="200" value={zoom} onChange={(e) => setZoom(Number(e.target.value))} className="slider" />
+        </div>
+        <div className="control-group" style={{ marginTop: '0.5rem' }}>
+          <label className="control-label">Pan X: {ox}%</label>
+          <input type="range" min="-100" max="100" value={ox} onChange={(e) => setOx(Number(e.target.value))} className="slider" />
+        </div>
+        <div className="control-group" style={{ marginTop: '0.5rem' }}>
+          <label className="control-label">Pan Y: {oy}%</label>
+          <input type="range" min="-100" max="100" value={oy} onChange={(e) => setOy(Number(e.target.value))} className="slider" />
+        </div>
+        <button className="template-btn" style={{ marginTop: '0.75rem', width: '100%', justifyContent: 'center' }} onClick={resetFn}>
+          Reset Pan
+        </button>
       </div>
-      <div className="control-group" style={{ marginTop: '0.5rem' }}>
-        <label className="control-label">Pan X: {offsetX}%</label>
-        <input type="range" min="-100" max="100" value={offsetX}
-          onChange={(e) => setOffX(Number(e.target.value))} className="slider" />
-      </div>
-      <div className="control-group" style={{ marginTop: '0.5rem' }}>
-        <label className="control-label">Pan Y: {offsetY}%</label>
-        <input type="range" min="-100" max="100" value={offsetY}
-          onChange={(e) => setOffY(Number(e.target.value))} className="slider" />
-      </div>
-      <button className="template-btn"
-        style={{ marginTop: '0.75rem', width: '100%', justifyContent: 'center' }}
-        onClick={resetFn}>
-        Reset Pan
-      </button>
     </div>
   );
 
   const renderLayoutPanel = () => (
     <div className="settings-section">
-      <h3 className="template-heading">Target Printer</h3>
-      <div className="template-options">
-        <button className={`template-btn ${printerProfile === 'cp1000' ? 'active' : ''}`} onClick={() => setPrinterProfile('cp1000')}>Canon CP1000</button>
-        <button className={`template-btn ${printerProfile === 'standard' ? 'active' : ''}`} onClick={() => setPrinterProfile('standard')}>Standard (Any)</button>
+      <h3 className="template-heading" onClick={() => setIsPrinterExpanded(!isPrinterExpanded)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>Layout & Printer</span>
+        {isPrinterExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+      </h3>
+      <div className={`collapsible-content ${isPrinterExpanded ? 'expanded' : 'collapsed'}`}>
+        <div className="template-options">
+          <button className={`template-btn ${printerProfile === 'cp1000' ? 'active' : ''}`} onClick={() => setPrinterProfile('cp1000')}>Canon CP1000</button>
+          <button className={`template-btn ${printerProfile === 'standard' ? 'active' : ''}`} onClick={() => setPrinterProfile('standard')}>Standard (Any)</button>
+        </div>
+        <h3 className="template-heading" style={{ marginTop: '1rem', cursor: 'default' }}>Orientation</h3>
+        <div className="template-options">
+          <button className={`template-btn ${orientation === 'portrait' ? 'active' : ''}`} onClick={() => setOrientation('portrait')}>Portrait (4×6)</button>
+          <button className={`template-btn ${orientation === 'landscape' ? 'active' : ''}`} onClick={() => setOrientation('landscape')}>Landscape (6×4)</button>
+        </div>
+        <h3 className="template-heading" style={{ marginTop: '1rem', cursor: 'default' }}>Split Mode</h3>
+        <div className="template-options">
+          <button className={`template-btn ${splitMode === 'vertical' ? 'active' : ''}`} onClick={() => setSplitMode('vertical')}>Left / Right</button>
+          <button className={`template-btn ${splitMode === 'horizontal' ? 'active' : ''}`} onClick={() => setSplitMode('horizontal')}>Top / Bottom</button>
+        </div>
+        <h3 className="template-heading" style={{ marginTop: '1rem', cursor: 'default' }}>Frame Spacing</h3>
+        <div className="control-group">
+          <label className="control-label">Image Margin: {imageMargin}%</label>
+          <input type="range" min="0" max="15" step="0.5" value={imageMargin} onChange={(e) => setImageMargin(Number(e.target.value))} className="slider" />
+        </div>
+        <div className="control-group" style={{ marginTop: '0.5rem' }}>
+          <label className="control-label">Text Area Height: {textAreaHeight}%</label>
+          <input type="range" min="5" max="40" step="0.5" value={textAreaHeight} onChange={(e) => setTextAreaHeight(Number(e.target.value))} className="slider" />
+        </div>
+        <h3 className="template-heading" style={{ marginTop: '1rem', cursor: 'default' }}>Options</h3>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+          <input type="checkbox" checked={showDashedLine} onChange={(e) => setShowDashedLine(e.target.checked)} />
+          Show Dashed Cutting Lines
+        </label>
       </div>
-      <h3 className="template-heading" style={{ marginTop: '1rem' }}>Orientation</h3>
-      <div className="template-options">
-        <button className={`template-btn ${orientation === 'portrait' ? 'active' : ''}`} onClick={() => setOrientation('portrait')}>Portrait (4×6)</button>
-        <button className={`template-btn ${orientation === 'landscape' ? 'active' : ''}`} onClick={() => setOrientation('landscape')}>Landscape (6×4)</button>
-      </div>
-      <h3 className="template-heading" style={{ marginTop: '1rem' }}>Split Mode</h3>
-      <div className="template-options">
-        <button className={`template-btn ${splitMode === 'vertical' ? 'active' : ''}`} onClick={() => setSplitMode('vertical')}>Left / Right</button>
-        <button className={`template-btn ${splitMode === 'horizontal' ? 'active' : ''}`} onClick={() => setSplitMode('horizontal')}>Top / Bottom</button>
-      </div>
-      <h3 className="template-heading" style={{ marginTop: '1rem' }}>Frame</h3>
-      <div className="control-group">
-        <label className="control-label">Image Margin: {imageMargin}%</label>
-        <input type="range" min="0" max="15" step="0.5" value={imageMargin}
-          onChange={(e) => setImageMargin(Number(e.target.value))} className="slider" />
-      </div>
-      <div className="control-group" style={{ marginTop: '0.5rem' }}>
-        <label className="control-label">Text Area Height: {textAreaHeight}%</label>
-        <input type="range" min="5" max="40" step="0.5" value={textAreaHeight}
-          onChange={(e) => setTextAreaHeight(Number(e.target.value))} className="slider" />
-      </div>
-      <div className="control-group" style={{ marginTop: '0.5rem' }}>
-        <label className="control-label">Text Padding: {textMargin}%</label>
-        <input type="range" min="0" max="15" step="0.5" value={textMargin}
-          onChange={(e) => setTextMargin(Number(e.target.value))} className="slider" />
-      </div>
-      <h3 className="template-heading" style={{ marginTop: '1rem' }}>Options</h3>
-      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem' }}>
-        <input type="checkbox" checked={showDashedLine} onChange={(e) => setShowDashedLine(e.target.checked)} />
-        Show Dashed Cutting Line
-      </label>
     </div>
   );
 
@@ -359,33 +372,38 @@ export default function DualPrintPage({ isDarkMode }) {
 
   const renderStylePanel = () => (
     <div className="settings-section">
-      <h3 className="template-heading">Typography</h3>
-      <div className="yearbook-pill-row">
-        {FONT_OPTIONS.map((f) => (
-          <button key={f.id} className={`yearbook-pill ${fontFamily === f.id ? 'active' : ''}`}
-            onClick={() => setFontFamily(f.id)}>{f.label}</button>
-        ))}
-      </div>
-      <div className="control-group" style={{ marginTop: '1rem' }}>
-        <label className="control-label">Font Weight</label>
-        <select className="yearbook-input" value={fontWeight} onChange={(e) => setFontWeight(e.target.value)}>
-          <option value="300">Light (300)</option>
-          <option value="normal">Normal (400)</option>
-          <option value="500">Medium (500)</option>
-          <option value="600">Semi Bold (600)</option>
-          <option value="bold">Bold (700)</option>
-        </select>
-      </div>
-      <div className="control-group" style={{ marginTop: '0.75rem' }}>
-        <label className="control-label">Text Scale: {fontSizeScale}%</label>
-        <input type="range" min="50" max="200" value={fontSizeScale}
-          onChange={(e) => setFontSizeScale(Number(e.target.value))} className="slider" />
-      </div>
-      <div className="control-group" style={{ marginTop: '1rem' }}>
-        <button className="upload-logo-btn" onClick={() => document.getElementById('du-font-upload').click()}>
-          Upload Custom Font (.ttf, .otf)
-        </button>
-        <input id="du-font-upload" type="file" accept=".ttf,.otf,.woff" style={{ display: 'none' }} onChange={handleFontUpload} />
+      <h3 className="template-heading" onClick={() => setIsTypographyExpanded(!isTypographyExpanded)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>Typography</span>
+        {isTypographyExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+      </h3>
+      <div className={`collapsible-content ${isTypographyExpanded ? 'expanded' : 'collapsed'}`}>
+        <div className="yearbook-pill-row">
+          {FONT_OPTIONS.map((f) => (
+            <button key={f.id} className={`yearbook-pill ${fontFamily === f.id ? 'active' : ''}`}
+              onClick={() => setFontFamily(f.id)}>{f.label}</button>
+          ))}
+        </div>
+        <div className="control-group" style={{ marginTop: '1rem' }}>
+          <label className="control-label">Font Weight</label>
+          <select className="yearbook-input" value={fontWeight} onChange={(e) => setFontWeight(e.target.value)}>
+            <option value="300">Light (300)</option>
+            <option value="normal">Normal (400)</option>
+            <option value="500">Medium (500)</option>
+            <option value="600">Semi Bold (600)</option>
+            <option value="bold">Bold (700)</option>
+          </select>
+        </div>
+        <div className="control-group" style={{ marginTop: '0.75rem' }}>
+          <label className="control-label">Text Scale: {fontSizeScale}%</label>
+          <input type="range" min="50" max="200" value={fontSizeScale}
+            onChange={(e) => setFontSizeScale(Number(e.target.value))} className="slider" />
+        </div>
+        <div className="control-group" style={{ marginTop: '1rem' }}>
+          <button className="upload-logo-btn" onClick={() => document.getElementById('du-font-upload').click()}>
+            Upload Custom Font (.ttf, .otf)
+          </button>
+          <input id="du-font-upload" type="file" accept=".ttf,.otf,.woff" style={{ display: 'none' }} onChange={handleFontUpload} />
+        </div>
       </div>
     </div>
   );
@@ -400,14 +418,23 @@ export default function DualPrintPage({ isDarkMode }) {
         /* Upload landing zone */
         <div 
           className="yearbook-upload-zone" 
-          style={{ flexDirection: 'column', gap: '2rem', cursor: 'pointer' }}
+          style={{ flexDirection: 'column', gap: '2rem', cursor: 'pointer', position: 'relative' }}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => { e.preventDefault(); handleDualFileInput(e.dataTransfer.files); }}
           onClick={(e) => {
-            if (e.target.closest('.slot-btn')) return;
+            if (e.target.closest('.slot-btn') || e.target.closest('.back-btn')) return;
             document.getElementById('du-file-both').click();
           }}
         >
+          {onBack && (
+            <button 
+              className="app-tab-btn active back-btn" 
+              style={{ position: 'absolute', top: '2rem', left: '2rem', gap: '0.5rem', zIndex: 10 }} 
+              onClick={(e) => { e.stopPropagation(); onBack(); }}
+            >
+              <ArrowLeft size={16} /> Layout Menu
+            </button>
+          )}
           <input 
             id="du-file-both" 
             type="file" 
@@ -456,20 +483,20 @@ export default function DualPrintPage({ isDarkMode }) {
           {/* ── LEFT SIDEBAR: Photo A ── */}
           <aside className="yearbook-sidebar">
             <div className="panel-box">
+              {onBack && (
+                <button className="template-btn" style={{ marginBottom: '1rem', width: '100%', justifyContent: 'center' }} onClick={onBack}>
+                  <ArrowLeft size={16} /> Layout Menu
+                </button>
+              )}
               <div className="yearbook-sidebar-controls" style={{ maxHeight: 'none', overflowY: 'visible' }}>
-                {renderPhotoSlot(
-                  'Photo A', photoA, isUploadingA, 'du-file-A',
-                  handleDropA,
-                  (files) => handleFileInput(files, 'A'),
-                  () => setPhotoA(null)
-                )}
-                {renderImageFit(
-                  'Photo A',
+                {renderPhotoSlot('Photo A', photoA, isUploadingA, 'du-file-A',
+                  handleDropA, (files) => handleFileInput(files, 'A'), () => setPhotoA(null))}
+                {renderImageFit('Photo A',
                   imageZoomA, setImageZoomA,
                   imageOffsetXA, setImageOffsetXA,
                   imageOffsetYA, setImageOffsetYA,
-                  () => { setImageOffsetXA(0); setImageOffsetYA(0); }
-                )}
+                  () => { setImageOffsetXA(0); setImageOffsetYA(0); },
+                  isFitAExpanded, setIsFitAExpanded)}
                 <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '1rem' }}>
                   {renderLayoutPanel()}
                 </div>
@@ -507,19 +534,14 @@ export default function DualPrintPage({ isDarkMode }) {
           <aside className="yearbook-sidebar">
             <div className="panel-box">
               <div className="yearbook-sidebar-controls" style={{ maxHeight: 'none', overflowY: 'visible' }}>
-                {renderPhotoSlot(
-                  'Photo B', photoB, isUploadingB, 'du-file-B',
-                  handleDropB,
-                  (files) => handleFileInput(files, 'B'),
-                  () => setPhotoB(null)
-                )}
-                {renderImageFit(
-                  'Photo B',
+                {renderPhotoSlot('Photo B', photoB, isUploadingB, 'du-file-B',
+                  handleDropB, (files) => handleFileInput(files, 'B'), () => setPhotoB(null))}
+                {renderImageFit('Photo B',
                   imageZoomB, setImageZoomB,
                   imageOffsetXB, setImageOffsetXB,
                   imageOffsetYB, setImageOffsetYB,
-                  () => { setImageOffsetXB(0); setImageOffsetYB(0); }
-                )}
+                  () => { setImageOffsetXB(0); setImageOffsetYB(0); },
+                  isFitBExpanded, setIsFitBExpanded)}
                 <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '1rem' }}>
                   {renderTextPanel()}
                   {renderStylePanel()}
