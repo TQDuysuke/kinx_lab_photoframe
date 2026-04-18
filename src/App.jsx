@@ -3,9 +3,14 @@ import Upload from './components/Upload';
 import TemplateSelector from './components/TemplateSelector';
 import FrameCanvas from './components/FrameCanvas';
 import YearbookPage from './pages/YearbookPage';
+import DoublePrintPage from './pages/DoublePrintPage';
+import FourthPrintPage from './pages/FourthPrintPage';
+import WeddingFramePage from './pages/WeddingFramePage';
+import DualPrintPage from './pages/DualPrintPage';
+import PngFramePage from './pages/PngFramePage';
 import { extractExif } from './utils/extractExif';
 import { iphoneFrame } from './templates/iphoneFrame';
-import { Image as ImageIcon, Download, X, Moon, Sun, LayoutTemplate, SlidersHorizontal, Type, ArrowDownToLine, BookOpen, Camera } from 'lucide-react';
+import { Image as ImageIcon, Download, X, Moon, Sun, LayoutTemplate, SlidersHorizontal, Type, ArrowDownToLine, BookOpen, Camera, Printer, Layers } from 'lucide-react';
 import { generateFrameUrl } from './utils/generateFrame';
 
 // Import logos
@@ -25,7 +30,7 @@ import { glassFrame } from './templates/glassFrame';
 const templates = [iphoneFrame, blurFrame, liveViewFrame, filmFrame, glassFrame];
 
 export default function App() {
-  const [activePage, setActivePage] = useState('frame'); // 'frame' | 'yearbook'
+  const [activePage, setActivePage] = useState(() => localStorage.getItem('last_active_page') || 'frame'); // 'frame' | 'yearbook' | 'doubleprint'
   const [photos, setPhotos] = useState([]);
   const [activePhotoId, setActivePhotoId] = useState(null);
   const [activeMobileTab, setActiveMobileTab] = useState(null); // 'templates', 'text', 'frame', 'logo'
@@ -61,6 +66,11 @@ export default function App() {
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
+
+  // Save active page to localStorage
+  useEffect(() => {
+    localStorage.setItem('last_active_page', activePage);
+  }, [activePage]);
 
   // PWA Install Prompt Listener
   useEffect(() => {
@@ -535,6 +545,36 @@ export default function App() {
           >
             <BookOpen size={16} /> Yearbook
           </button>
+          <button
+            className={`app-tab-btn ${activePage === 'doubleprint' ? 'active' : ''}`}
+            onClick={() => setActivePage('doubleprint')}
+          >
+            <Printer size={16} /> Double Print
+          </button>
+          <button
+            className={`app-tab-btn ${activePage === 'fourthprint' ? 'active' : ''}`}
+            onClick={() => setActivePage('fourthprint')}
+          >
+            <Printer size={16} /> Fourth Print
+          </button>
+          <button
+            className={`app-tab-btn ${activePage === 'dualprint' ? 'active' : ''}`}
+            onClick={() => setActivePage('dualprint')}
+          >
+            <LayoutTemplate size={16} /> Dual Print
+          </button>
+          <button
+            className={`app-tab-btn ${activePage === 'weddingframe' ? 'active' : ''}`}
+            onClick={() => setActivePage('weddingframe')}
+          >
+            <LayoutTemplate size={16} /> Wedding Frame
+          </button>
+          <button
+            className={`app-tab-btn ${activePage === 'pngframe' ? 'active' : ''}`}
+            onClick={() => setActivePage('pngframe')}
+          >
+            <Layers size={16} /> PNG Frame
+          </button>
         </div>
       </header>
 
@@ -543,6 +583,23 @@ export default function App() {
         {activePage === 'yearbook' && (
           <YearbookPage isDarkMode={isDarkMode} />
         )}
+
+        {/* Double Print Page */}
+        {activePage === 'doubleprint' && <DoublePrintPage isDarkMode={isDarkMode} />}
+
+        {/* Fourth Print Page */}
+        {activePage === 'fourthprint' && <FourthPrintPage isDarkMode={isDarkMode} />}
+
+        {/* Dual Print Page */}
+        {activePage === 'dualprint' && (
+          <DualPrintPage isDarkMode={isDarkMode} />
+        )}
+
+        {/* Wedding Frame Page */}
+        {activePage === 'weddingframe' && <WeddingFramePage isDarkMode={isDarkMode} />}
+
+        {/* PNG Frame Page */}
+        {activePage === 'pngframe' && <PngFramePage isDarkMode={isDarkMode} />}
 
         {/* Photo Frame Page */}
         {activePage === 'frame' && photos.length === 0 ? (
