@@ -7,9 +7,10 @@ import DoublePrintPage from './pages/DoublePrintPage';
 import FourthPrintPage from './pages/FourthPrintPage';
 import WeddingFramePage from './pages/WeddingFramePage';
 import DualPrintPage from './pages/DualPrintPage';
+import PngFramePage from './pages/PngFramePage';
 import { extractExif } from './utils/extractExif';
 import { iphoneFrame } from './templates/iphoneFrame';
-import { Image as ImageIcon, Download, X, Moon, Sun, LayoutTemplate, SlidersHorizontal, Type, ArrowDownToLine, BookOpen, Camera, Printer } from 'lucide-react';
+import { Image as ImageIcon, Download, X, Moon, Sun, LayoutTemplate, SlidersHorizontal, Type, ArrowDownToLine, BookOpen, Camera, Printer, Layers } from 'lucide-react';
 import { generateFrameUrl } from './utils/generateFrame';
 
 // Import logos
@@ -568,6 +569,12 @@ export default function App() {
           >
             <LayoutTemplate size={16} /> Wedding Frame
           </button>
+          <button
+            className={`app-tab-btn ${activePage === 'pngframe' ? 'active' : ''}`}
+            onClick={() => setActivePage('pngframe')}
+          >
+            <Layers size={16} /> PNG Frame
+          </button>
         </div>
       </header>
 
@@ -589,9 +596,10 @@ export default function App() {
         )}
 
         {/* Wedding Frame Page */}
-        {activePage === 'weddingframe' && (
-          <WeddingFramePage isDarkMode={isDarkMode} />
-        )}
+        {activePage === 'weddingframe' && <WeddingFramePage isDarkMode={isDarkMode} />}
+
+        {/* PNG Frame Page */}
+        {activePage === 'pngframe' && <PngFramePage isDarkMode={isDarkMode} />}
 
         {/* Photo Frame Page */}
         {activePage === 'frame' && photos.length === 0 ? (
