@@ -45,7 +45,21 @@ export default function App() {
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  // Sync dark mode preference to localStorage and document root
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      const x = (e.clientX / window.innerWidth) * 100;
+      const y = (e.clientY / window.innerHeight) * 100;
+      document.documentElement.style.setProperty('--mouse-x', `${x}%`);
+      document.documentElement.style.setProperty('--mouse-y', `${y}%`);
+    };
+    // Set initial values
+    document.documentElement.style.setProperty('--mouse-x', '50%');
+    document.documentElement.style.setProperty('--mouse-y', '20%');
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('photoframe-theme', isDarkMode ? 'dark' : 'light');
     if (isDarkMode) {

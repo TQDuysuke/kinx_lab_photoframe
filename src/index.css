@@ -96,25 +96,23 @@ body {
   display: flex;
   flex-direction: column;
   background:
-    radial-gradient(circle at 15% 30%, rgba(26, 115, 232, 0.04) 0%, transparent 25%),
-    radial-gradient(circle at 85% 65%, rgba(217, 48, 37, 0.03) 0%, transparent 20%),
-    radial-gradient(circle at 50% 10%, rgba(244, 180, 0, 0.04) 0%, transparent 30%),
-    radial-gradient(circle at 70% 80%, rgba(15, 157, 88, 0.03) 0%, transparent 20%),
+    radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 20%), rgba(26, 115, 232, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at calc(100% - var(--mouse-x, 50%)) calc(100% - var(--mouse-y, 20%)), rgba(217, 48, 37, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at calc(var(--mouse-x, 50%) * 0.5 + 25%) calc(var(--mouse-y, 20%) * 0.5 + 25%), rgba(244, 180, 0, 0.06) 0%, transparent 35%),
     var(--bg-page);
-  background-size: 150% 150%;
-  animation: gradientFlow 20s ease infinite;
+  background-attachment: fixed;
   color: var(--text-primary);
   transition: color 0.3s ease;
+  overflow-x: hidden;
 }
 
 .dark-theme.app-container {
   background:
-    radial-gradient(circle at 20% 40%, rgba(100, 140, 255, 0.06) 0%, transparent 30%),
-    radial-gradient(circle at 80% 60%, rgba(120, 80, 255, 0.04) 0%, transparent 25%),
-    radial-gradient(circle at 50% 90%, rgba(40, 200, 180, 0.03) 0%, transparent 25%),
+    radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 20%), rgba(100, 140, 255, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at calc(100% - var(--mouse-x, 50%)) calc(100% - var(--mouse-y, 20%)), rgba(150, 80, 255, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at calc(var(--mouse-x, 50%) * 0.7 + 15%) calc(var(--mouse-y, 20%) * 0.7 + 15%), rgba(40, 200, 180, 0.06) 0%, transparent 40%),
     var(--bg-page);
-  background-size: 200% 200%;
-  animation: gradientFlow 25s ease infinite;
+  background-attachment: fixed;
 }
 
 @keyframes gradientFlow {
